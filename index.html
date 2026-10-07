@@ -1,0 +1,468 @@
+<title>People Analytics</title>
+<style>
+  /* Layout: Power-BI-style report with top band, page tabs, global slicers and chart grids. Omexom brand tokens. */
+  :root{
+    --bg:#eef1f4; --surface:#ffffff; --surface-2:#f6f8fa;
+    --ink:#182230; --muted:#5b6670; --faint:#8a94a0;
+    --grid:#e7ebef; --border:#e1e6ea;
+    --brand:#0071ce; --brand-deep:#005ca8; --cyan:#00a7c6; --amber:#e39a00;
+    --good:#1c8a57; --good-bg:#e3f3ea; --warn:#b07d00; --warn-bg:#fcf0d4; --risk:#c5362c; --risk-bg:#fbe6e3;
+    --band:#0071ce; --band-ink:#ffffff; --band-sub:#cfe6fb;
+    --shadow:0 1px 2px rgba(16,38,60,.06),0 2px 10px rgba(16,38,60,.05);
+    --r:10px; --f:"Arial","Helvetica Neue",Helvetica,system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0e141b; --surface:#161e27; --surface-2:#121922;
+    --ink:#e8edf2; --muted:#9aa6b2; --faint:#73808d;
+    --grid:#243039; --border:#263340;
+    --brand:#2e9be6; --brand-deep:#5bb4ef; --cyan:#35c6e0; --amber:#ffc23f;
+    --band:#0b2740; --band-ink:#ffffff; --band-sub:#bcd6ef;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 2px 12px rgba(0,0,0,.35); color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0e141b; --surface:#161e27; --surface-2:#121922;
+    --ink:#e8edf2; --muted:#9aa6b2; --faint:#73808d;
+    --grid:#243039; --border:#263340;
+    --brand:#2e9be6; --brand-deep:#5bb4ef; --cyan:#35c6e0; --amber:#ffc23f;
+    --band:#0b2740; --band-ink:#ffffff; --band-sub:#bcd6ef;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 2px 12px rgba(0,0,0,.35); color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.4}
+  .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:0 28px}
+  .band{background:var(--band);color:var(--band-ink);border-radius:0 0 14px 14px;padding:16px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .mark{font-weight:700;letter-spacing:.14em;font-size:20px}
+  .band h1{font-size:15px;font-weight:700;margin:0;line-height:1.2}
+  .band .sub{color:var(--band-sub);font-size:12px;margin-top:2px}
+  .band .spacer{flex:1 1 40px}
+  .badge{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;letter-spacing:.04em}
+  .tbtn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.32);border-radius:8px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer}
+  .tbtn:hover{background:rgba(255,255,255,.26)}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin:14px 0 2px;border-bottom:2px solid var(--border)}
+  .tab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:9px 14px;font-family:var(--f);font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer;border-radius:6px 6px 0 0}
+  .tab:hover{color:var(--ink);background:var(--surface-2)}
+  .tab[aria-selected="true"]{color:var(--brand-deep);border-bottom-color:var(--brand)}
+  .tab:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .slicers{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:14px 0 2px}
+  .slicer{display:flex;flex-direction:column;gap:4px}
+  .slicer label{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .slicer select,.chip{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;font-family:var(--f);min-width:170px;box-shadow:var(--shadow)}
+  .chip{display:inline-flex;align-items:center;min-width:0;font-weight:600}
+  .slicer select:focus-visible,.tbtn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:14px 0}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand)}
+  .kpi .k-l{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .kpi .k-v{font-size:26px;font-weight:700;margin:4px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .kpi .k-d{font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+  .kpi .k-s{font-size:11px;color:var(--faint);margin-top:3px}
+  .up-good,.down-good{color:var(--good)} .up-bad,.down-bad{color:var(--risk)} .flat{color:var(--muted)}
+  .grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:12px;margin-top:12px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px 12px;box-shadow:var(--shadow);min-width:0;margin-top:12px}
+  .card h2{font-size:13px;margin:0 0 2px;font-weight:700}
+  .card .h-sub{font-size:11px;color:var(--faint);margin:0 0 8px}
+  .legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin:2px 0 6px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .ax{fill:var(--muted);font-size:11px} .vlab{fill:var(--ink);font-size:11px;font-weight:700}
+  .gl{stroke:var(--grid);stroke-width:1}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--border)}
+  th{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700}
+  .p-good{background:var(--good-bg);color:var(--good)} .p-warn{background:var(--warn-bg);color:var(--warn)} .p-risk{background:var(--risk-bg);color:var(--risk)}
+  .note{font-size:11px;color:var(--faint);margin-top:16px;line-height:1.5}
+  #tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--surface);padding:6px 9px;border-radius:7px;font-size:12px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;transition:opacity .08s;white-space:nowrap}
+  #tip .t2{font-weight:400;opacity:.85}
+  .hit{fill:transparent;cursor:crosshair}
+  .bar{cursor:default}
+  @media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)} .grid,.grid2{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="band">
+  <span class="mark">OMEXOM</span>
+  <div><h1>People Analytics</h1><div class="sub" id="bandsub">Regional HR dashboards</div></div>
+  <span class="spacer"></span>
+  <span class="badge">Illustrative sample data</span>
+  <button class="tbtn" id="theme" type="button" aria-label="Toggle light or dark theme">Dark</button>
+</div>
+
+<div class="wrap">
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div class="slicers">
+    <div class="slicer"><label for="region">Region</label><select id="region"></select></div>
+    <div class="slicer"><label for="dept">Department</label><select id="dept"></select></div>
+    <div class="slicer"><label for="role">Job role</label><select id="role"></select></div>
+    <div class="slicer"><label>Period</label><span class="chip">12 months to Sep 2026</span></div>
+  </div>
+  <div id="page"></div>
+  <p class="note" id="foot"></p>
+</div>
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var tip=$("#tip");
+  function showTip(html,x,y){tip.innerHTML=html;tip.style.opacity="1";var w=tip.offsetWidth,h=tip.offsetHeight;var px=x+14;if(px+w>innerWidth-8)px=x-w-14;var py=y-h-10;if(py<8)py=y+18;tip.style.left=px+"px";tip.style.top=py+"px";}
+  function hideTip(){tip.style.opacity="0";}
+  function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+  function nf(n){return Number(n).toLocaleString("en-GB");}
+  var MON=["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"];
+
+  /* ---------- chart primitives ---------- */
+  function lineChart(id,series,o){
+    o=o||{};var W=720,H=290,L=44,R=16,T=14,B=28,pw=W-L-R,ph=H-T-B;
+    var yMax=o.yMax||5,n=series.length,labels=o.labels||MON,unit=o.unit||"%",tks=o.ticks||5;
+    var X=function(i){return L+pw*i/(n-1);},Y=function(v){return T+ph*(1-v/yMax);};
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Line chart">';
+    for(var t=0;t<=tks;t++){var v=yMax*t/tks,y=Y(v);s+='<line class="gl" x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'"/><text class="ax" x="'+(L-8)+'" y="'+(y+4)+'" text-anchor="end">'+(yMax>=100?Math.round(v):v.toFixed(0))+unit+'</text>';}
+    for(var i=0;i<n;i+=(n>8?2:1)){s+='<text class="ax" x="'+X(i)+'" y="'+(H-9)+'" text-anchor="middle">'+labels[i]+'</text>';}
+    if(o.target!=null){var ty=Y(o.target);s+='<line x1="'+L+'" y1="'+ty+'" x2="'+(W-R)+'" y2="'+ty+'" stroke="var(--amber)" stroke-width="2" stroke-dasharray="6 5"/><text class="ax" x="'+(L+4)+'" y="'+(ty-6)+'" text-anchor="start" style="fill:var(--amber);font-weight:700">Target '+o.target+unit+'</text>';}
+    var dp="",ar="M"+X(0)+" "+(T+ph);
+    for(var j=0;j<n;j++){dp+=(j?"L":"M")+X(j)+" "+Y(series[j])+" ";ar+="L"+X(j)+" "+Y(series[j])+" ";}
+    ar+="L"+X(n-1)+" "+(T+ph)+" Z";
+    s+='<path d="'+ar+'" fill="var(--brand)" opacity="0.08"/><path d="'+dp+'" fill="none" stroke="var(--brand)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
+    for(var k=0;k<n;k++)s+='<circle cx="'+X(k)+'" cy="'+Y(series[k])+'" r="'+(k===n-1?4.5:3)+'" fill="var(--surface)" stroke="var(--brand)" stroke-width="2"/>';
+    s+='<text x="'+X(n-1)+'" y="'+(Y(series[n-1])-12)+'" text-anchor="end" class="vlab" style="fill:var(--brand-deep)">'+series[n-1]+unit+'</text>';
+    s+='<line class="cx" x1="0" y1="'+T+'" x2="0" y2="'+(T+ph)+'" stroke="var(--brand)" stroke-width="1" opacity="0"/>';
+    var step=pw/(n-1);
+    for(var h=0;h<n;h++)s+='<rect class="hit" x="'+(X(h)-step/2)+'" y="'+T+'" width="'+step+'" height="'+ph+'" data-i="'+h+'"/>';
+    s+='</svg>';
+    var el=$("#"+id);el.innerHTML=s;
+    var svg=$("svg",el),cx=$(".cx",el);
+    el.querySelectorAll(".hit").forEach(function(r){
+      r.addEventListener("mousemove",function(){var i=+r.getAttribute("data-i"),bb=svg.getBoundingClientRect(),sc=bb.width/W;
+        cx.setAttribute("x1",X(i));cx.setAttribute("x2",X(i));cx.setAttribute("opacity","1");
+        showTip(labels[i]+'<br><span class="t2">'+(o.name||"Value")+' '+series[i]+unit+(o.target!=null?' · target '+o.target+unit:"")+'</span>',bb.left+X(i)*sc,bb.top+Y(series[i])*sc);});
+      r.addEventListener("mouseleave",function(){cx.setAttribute("opacity","0");hideTip();});
+    });
+  }
+  function hbars(id,items,o){
+    o=o||{};var W=360,rowH=32,padT=6,L=o.labelW||104,R=46,pw=W-L-R,H=padT+items.length*rowH+6;
+    var max=o.max||Math.max.apply(null,items.map(function(x){return x[1];})),unit=o.unit||"";
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Bar chart">';
+    if(o.target!=null){var tx=L+pw*o.target/max;s+='<line x1="'+tx+'" y1="'+padT+'" x2="'+tx+'" y2="'+(H-6)+'" stroke="var(--amber)" stroke-width="2" stroke-dasharray="5 4"/>';}
+    items.forEach(function(it,i){var y=padT+i*rowH,bw=Math.max(pw*it[1]/max,2),over=o.target!=null&&(o.lowerBetter?it[1]>o.target:it[1]<o.target);
+      s+='<text class="ax" x="'+(L-8)+'" y="'+(y+rowH/2+4)+'" text-anchor="end">'+esc(it[0])+'</text>';
+      s+='<rect x="'+L+'" y="'+(y+5)+'" width="'+bw+'" height="'+(rowH-12)+'" rx="4" fill="var(--brand)" class="bar" data-l="'+esc(it[0])+'" data-v="'+it[1]+unit+'"/>';
+      s+='<text x="'+(L+bw+6)+'" y="'+(y+rowH/2+4)+'" class="vlab" '+(over?'style="fill:var(--risk)"':'')+'>'+it[1]+unit+(over?' ▼':'')+'</text>';});
+    s+='</svg>';var el=$("#"+id);el.innerHTML=s;wireMarks(el);
+  }
+  function stacked(id,rows,o){
+    o=o||{};var W=360,H=240,L=36,R=10,T=10,B=26,pw=W-L-R,ph=H-T-B;
+    var tot=rows.map(function(r){return r[1]+r[2];}),max=Math.ceil(Math.max.apply(null,tot)/(o.step||200))*(o.step||200);
+    var n=rows.length,bw=Math.min(52,pw/n*0.6),gap=(pw-bw*n)/(n+1),Y=function(v){return T+ph*(1-v/max);};
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Stacked columns">';
+    for(var t=0;t<=4;t++){var v=max*t/4,y=Y(v);s+='<line class="gl" x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'"/><text class="ax" x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end">'+Math.round(v)+'</text>';}
+    rows.forEach(function(r,i){var x=L+gap+i*(bw+gap),sh=ph*r[1]/max,lo=ph*r[2]/max,yb=T+ph;
+      s+='<rect x="'+x+'" y="'+(yb-sh)+'" width="'+bw+'" height="'+sh+'" rx="3" fill="var(--brand)" class="bar" data-l="'+r[0]+' '+(o.a||"A")+'" data-v="'+r[1]+(o.unit||"")+'"/>';
+      s+='<rect x="'+x+'" y="'+(yb-sh-lo-2)+'" width="'+bw+'" height="'+lo+'" rx="3" fill="var(--cyan)" class="bar" data-l="'+r[0]+' '+(o.b||"B")+'" data-v="'+r[2]+(o.unit||"")+'"/>';
+      s+='<text class="ax" x="'+(x+bw/2)+'" y="'+(H-9)+'" text-anchor="middle">'+r[0]+'</text>';
+      s+='<text class="vlab" x="'+(x+bw/2)+'" y="'+(yb-sh-lo-8)+'" text-anchor="middle" style="font-size:10px">'+(r[1]+r[2])+'</text>';});
+    s+='</svg>';var el=$("#"+id);el.innerHTML=s;wireMarks(el);
+  }
+  function groupedCols(id,rows,o){
+    o=o||{};var W=360,H=240,L=34,R=10,T=16,B=26,pw=W-L-R,ph=H-T-B;
+    var max=o.max||Math.ceil(Math.max.apply(null,rows.map(function(r){return Math.max(r[1],r[2]);}))/10)*10;
+    var n=rows.length,grp=pw/n,bw=Math.min(20,grp*0.32),Y=function(v){return T+ph*(1-v/max);};
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Grouped columns">';
+    for(var t=0;t<=4;t++){var v=max*t/4,y=Y(v);s+='<line class="gl" x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'"/><text class="ax" x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end">'+Math.round(v)+'</text>';}
+    rows.forEach(function(r,i){var cx=L+grp*i+grp/2,yb=T+ph;var ha=ph*r[1]/max,hb=ph*r[2]/max;
+      s+='<rect x="'+(cx-bw-1)+'" y="'+(yb-ha)+'" width="'+bw+'" height="'+ha+'" rx="3" fill="var(--brand)" class="bar" data-l="'+r[0]+' '+(o.a||"A")+'" data-v="'+r[1]+'"/>';
+      s+='<rect x="'+(cx+1)+'" y="'+(yb-hb)+'" width="'+bw+'" height="'+hb+'" rx="3" fill="var(--cyan)" class="bar" data-l="'+r[0]+' '+(o.b||"B")+'" data-v="'+r[2]+'"/>';
+      s+='<text x="'+(cx-bw/2-1)+'" y="'+(yb-ha-4)+'" text-anchor="middle" class="vlab" style="font-size:9px">'+r[1]+'</text>';
+      s+='<text x="'+(cx+bw/2+1)+'" y="'+(yb-hb-4)+'" text-anchor="middle" class="vlab" style="font-size:9px;fill:var(--brand-deep)">'+r[2]+'</text>';
+      s+='<text class="ax" x="'+cx+'" y="'+(H-9)+'" text-anchor="middle">'+r[0]+'</text>';});
+    s+='</svg>';var el=$("#"+id);el.innerHTML=s;wireMarks(el);
+  }
+  function deptBars(id,items,o){
+    o=o||{};var W=720,rowH=26,padT=6,L=200,R=54,pw=W-L-R,H=padT+items.length*rowH+6;
+    var max=Math.max.apply(null,items.map(function(x){return x.value;})),unit=o.unit||"";
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="By department bar chart">';
+    if(o.target!=null){var tx=L+pw*o.target/max;s+='<line x1="'+tx+'" y1="'+padT+'" x2="'+tx+'" y2="'+(H-6)+'" stroke="var(--amber)" stroke-width="2" stroke-dasharray="5 4"/>';}
+    items.forEach(function(it,i){var y=padT+i*rowH,bw=Math.max(pw*it.value/max,2);var fill=it.group==="Corporate"?"var(--cyan)":"var(--brand)";
+      var fade=(o.highlight&&o.highlight!=="all"&&o.highlight!==it.id)?' opacity="0.35"':'';
+      s+='<text class="ax" x="'+(L-8)+'" y="'+(y+rowH/2+4)+'" text-anchor="end">'+esc(it.label)+'</text>';
+      s+='<rect class="bar" x="'+L+'" y="'+(y+4)+'" width="'+bw+'" height="'+(rowH-10)+'" rx="4" fill="'+fill+'"'+fade+' data-l="'+esc(it.label)+'" data-v="'+it.value+unit+'"/>';
+      s+='<text x="'+(L+bw+6)+'" y="'+(y+rowH/2+4)+'" class="vlab">'+it.value+unit+'</text>';});
+    s+='</svg>';var el=$("#"+id);el.innerHTML=s;wireMarks(el);
+  }
+  function wireMarks(el){el.querySelectorAll(".bar").forEach(function(m){
+    m.addEventListener("mousemove",function(e){showTip(esc(m.getAttribute("data-l"))+'<br><span class="t2">'+esc(m.getAttribute("data-v"))+'</span>',e.clientX,e.clientY);});
+    m.addEventListener("mouseleave",hideTip);});}
+
+  /* ---------- builders ---------- */
+  function kpiHTML(arr){return '<div class="kpis">'+arr.map(function(k){
+    var cls=k.good?(k.dir==="down"?"down-good":"up-good"):(k.dir==="down"?"down-bad":"up-bad");if(k.dir==="flat")cls="flat";
+    var a=k.dir==="down"?"▼":k.dir==="up"?"▲":"▬";
+    return '<div class="kpi"><div class="k-l">'+esc(k.l)+'</div><div class="k-v">'+esc(k.v)+'</div><div class="k-d '+cls+'">'+a+' '+esc(k.d)+'</div><div class="k-s">'+esc(k.s)+'</div></div>';
+  }).join("")+'</div>';}
+  function card(title,sub,id,legend){return '<div class="card"><h2>'+title+'</h2><p class="h-sub">'+sub+'</p>'+(legend||"")+'<div id="'+id+'"></div></div>';}
+  function tableCard(title,sub,head,rows){return '<div class="card"><h2>'+title+'</h2><p class="h-sub">'+sub+'</p><div style="overflow-x:auto"><table><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';}
+  function leg(a,b){return '<div class="legend"><span><i style="background:var(--brand)"></i>'+a+'</span><span><i style="background:var(--cyan)"></i>'+b+'</span></div>';}
+  function deptCard(title,sub){return '<div class="card"><h2>'+title+'</h2><p class="h-sub">'+sub+'</p><div class="legend"><span><i style="background:var(--brand)"></i>Delivery</span><span><i style="background:var(--cyan)"></i>Corporate</span></div><div id="c_byd"></div><p class="h-sub" id="deptfocus" style="margin-top:8px"></p></div>';}
+
+  /* ---------- regions & departments ---------- */
+  var REGIONS=[
+    {id:"all",name:"All UK & Ireland",share:1,absF:1,attF:1,compD:0,sites:null},
+    {id:"sco",name:"Scotland",share:0.214,absF:1.08,attF:1.05,compD:-3,sites:["Inverness","Aberdeen","Glasgow","Edinburgh","Dundee"]},
+    {id:"nor",name:"North of England",share:0.154,absF:0.98,attF:1.00,compD:-1,sites:["Newcastle","Leeds","Manchester","Sheffield","Hull"]},
+    {id:"mid",name:"Midlands & East",share:0.188,absF:0.95,attF:0.97,compD:1,sites:["Birmingham","Leicester","Nottingham","Coventry","Derby","Peterborough"]},
+    {id:"lon",name:"London & South East",share:0.145,absF:0.97,attF:1.05,compD:2,sites:["London","Reading","Crawley","Maidstone","Chelmsford"]},
+    {id:"wal",name:"Wales & West",share:0.137,absF:1.00,attF:0.98,compD:0,sites:["Cardiff","Bristol","Swansea","Gloucester","Exeter"]},
+    {id:"irl",name:"Ireland",share:0.162,absF:1.02,attF:0.95,compD:1,sites:["Belfast","Dublin","Cork","Galway","Limerick"]}
+  ];
+  function reg(id){return REGIONS.filter(function(r){return r.id===id;})[0];}
+  function regs6(){return REGIONS.filter(function(r){return r.id!=="all";});}
+  var DEPTS=[
+    {id:"con",name:"Construction & Site",group:"Delivery",w:0.28,abs:1.5,comp:-4,er:1.4,roles:[["Construction Manager",2],["Site Manager",4],["Civils Site Engineer",6],["Overhead Linesperson",10],["Cable Jointer",7],["Substation Fitter",7]]},
+    {id:"pm",name:"Project Management",group:"Delivery",w:0.15,abs:0.8,comp:1,er:0.8,roles:[["Project Director",1],["Senior Project Manager",3],["Project Manager",6],["Project Engineer",7],["Graduate Project Manager",3]]},
+    {id:"eng",name:"Engineering & Design",group:"Delivery",w:0.13,abs:0.7,comp:1,er:0.7,roles:[["Design Manager",1],["Senior Design Engineer",3],["Design Engineer",6],["Protection & Control Engineer",3],["CAD Technician",3]]},
+    {id:"com",name:"Commercial & Estimating",group:"Delivery",w:0.08,abs:0.8,comp:0,er:0.8,roles:[["Commercial Manager",1],["Senior Quantity Surveyor",2],["Quantity Surveyor",4],["Estimator",3],["Bid Manager",1]]},
+    {id:"cmg",name:"Commissioning & Testing",group:"Delivery",w:0.07,abs:1.3,comp:-2,er:1.1,roles:[["Commissioning Manager",1],["Commissioning Engineer",4],["Test Technician",4]]},
+    {id:"shq",name:"SHEQ",group:"Delivery",w:0.06,abs:1.1,comp:3,er:0.9,roles:[["SHEQ Manager",1],["Health & Safety Advisor",4],["Environmental Advisor",2],["Quality Engineer",2]]},
+    {id:"fin",name:"Finance",group:"Corporate",w:0.06,abs:0.75,comp:3,er:0.7,roles:[["Finance Director",1],["Financial Controller",1],["Management Accountant",3],["Accounts Assistant",4],["Payroll Officer",2]]},
+    {id:"hr",name:"HR / People",group:"Corporate",w:0.05,abs:0.8,comp:4,er:0.8,roles:[["Head of HR",1],["Regional HR Manager",1],["HR Business Partner",3],["HR Advisor",4],["L&D Advisor",2]]},
+    {id:"pro",name:"Procurement & Supply Chain",group:"Corporate",w:0.045,abs:0.85,comp:1,er:0.85,roles:[["Procurement Manager",1],["Buyer",4],["Supply Chain Coordinator",3]]},
+    {id:"it",name:"IT & Digital",group:"Corporate",w:0.04,abs:0.7,comp:2,er:0.7,roles:[["IT Manager",1],["IT Support Technician",4],["Data / BI Analyst",2]]},
+    {id:"mkt",name:"Marketing & Communications",group:"Corporate",w:0.035,abs:0.75,comp:2,er:0.75,roles:[["Marketing Manager",1],["Communications Officer",2],["Digital Marketing Executive",2],["Bid Writer",2]]}
+  ];
+
+  /* ---------- base data (All UK & Ireland) ---------- */
+  var BASE={
+    absence:{rate:3.4,cost:1380000,openLT:61,trigger:83,days:6.3,
+      trend:[4.6,4.5,4.4,4.2,4.1,4.0,3.9,3.8,3.7,3.6,3.5,3.4],
+      reason:[["Minor illness",24],["Musculoskeletal",20],["Mental health",16],["Long-term other",16],["Stress / anxiety",13],["Surgery / hospital",11]],
+      split:[["Q1",2950,1850],["Q2",2800,1760],["Q3",2680,1700],["Q4",2560,1650]]},
+    er:{open:138,avgAge:26,resolved:16,
+      flow:[["Apr",28,24],["May",26,27],["Jun",24,26],["Jul",25,28],["Aug",22,27],["Sep",23,28]],
+      type:[["Disciplinary",38],["Long-term sickness",29],["Grievance",26],["Capability",21],["Flexible working",14],["Other",10]],
+      ageShares:[["0-14 days",0.355],["15-30 days",0.285],["31-60 days",0.19],["61-90 days",0.10],["90+ days",0.07]]},
+    hc:{head:4980,attr:15.1,vol:10.6,promo:68,tenure:6.1,
+      trend:[17.8,17.5,17.1,16.8,16.5,16.2,15.9,15.7,15.5,15.3,15.2,15.1],
+      reason:[["Career progression",24],["Better pay",23],["Relocation",15],["Work-life balance",12],["End of contract",11],["Retirement",8],["Other",7]],
+      flow:[["Q1",168,150],["Q2",190,162],["Q3",158,176],["Q4",180,166]]},
+    train:{overall:90,courses:14,fully:74,overdue:612,expiring:840,
+      trend:[83,84,85,86,87,87,88,88,89,89,90,90],
+      course:[["Site Safety Induction",98],["Fire Safety",96],["Manual Handling",94],["GDPR / Data",92],["First Aid",89],["Working at Height",86],["HV / LV Awareness",83]],
+      overdueByCourse:[["Working at Height",168],["HV / LV Awareness",150],["First Aid",104],["GDPR / Data",78],["Manual Handling",56],["Fire Safety",32],["Site Safety Induction",24]],
+      courseTable:[["Site Safety Induction",98,24,56],["Fire Safety",96,32,84],["Manual Handling",94,56,120],["GDPR / Data",92,78,110],["First Aid",89,104,150],["Working at Height",86,168,150],["HV / LV Awareness",83,150,160]]}
+  };
+
+  /* ---------- helpers ---------- */
+  function r1(v){return Math.round(v*10)/10;}
+  function money(v){return v>=1e6?('£'+(Math.round(v/1e5)/10)+'m'):('£'+Math.round(v/1000)+'k');}
+  function hf(s,lo,hi){var h=0,i;for(i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return lo+(h%997)/997*(hi-lo);}
+  function scaleArr(a,f){return a.map(function(x){return [x[0],Math.max(1,Math.round(x[1]*f))];});}
+  function scaleFlow(a,f){return a.map(function(x){return [x[0],Math.max(0,Math.round(x[1]*f)),Math.max(0,Math.round(x[2]*f))];});}
+  function distribute(total,names){var w=names.map(function(n){return hf(n,0.6,1.4);}),s=w.reduce(function(a,b){return a+b;},0);return names.map(function(n,i){return [n,Math.max(1,Math.round(total*w[i]/s))];});}
+  function distRate(rate,names){return names.map(function(n){return [n,r1(rate*hf(n,0.82,1.18))];});}
+  function distComp(base,names){return names.map(function(n){return [n,Math.max(60,Math.min(100,Math.round(base+(hf(n,0,4)-2))))];});}
+  function apportion(total,shares){var raw=shares.map(function(x){return total*x[1];}),fl=raw.map(Math.floor),used=fl.reduce(function(a,b){return a+b;},0),rem=total-used;var ord=raw.map(function(v,i){return [i,v-fl[i]];}).sort(function(a,b){return b[1]-a[1];});for(var k=0;k<rem;k++){fl[ord[k%ord.length][0]]++;}return shares.map(function(x,i){return [x[0],fl[i]];});}
+  function regAgg(page,id){var r=reg(id);
+    if(page==="absence")return r1(BASE.absence.rate*r.absF);
+    if(page==="er")return Math.round(BASE.er.open*r.share);
+    if(page==="hc")return Math.round(BASE.hc.head*r.share);
+    return Math.min(100,BASE.train.overall+r.compD);}
+
+  function genAbsCases(names,total){
+    var d=distribute(total,names).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
+    var stages=["Capability","OH referral","Welfare","Formal","Welfare","OH referral"];
+    return d.map(function(x,i){var code=i===0?"risk":(i<3?"warn":"good");var lab=i===0?"At risk":(i<3?"Watch":"On track");return [x[0],x[1],Math.max(6,34-i*5),stages[i%stages.length],code,lab];});
+  }
+  function genERcases(names,aged,trib){
+    var n=Math.min(aged,6),rows=[],types=["Grievance","Long-term sickness","Disciplinary","Capability","Grievance","Disciplinary"];
+    var ts=Math.min(trib,n);
+    for(var j=0;j<n;j++){var isRisk=j<ts,ageD=isRisk?90+(ts-1-j)*8:Math.max(61,86-(j-ts)*6);var code=isRisk?"risk":"warn",lab=isRisk?"At risk":"Watch";rows.push(["ER-"+(204+j),names[j%names.length],types[j%types.length],ageD,code,lab]);}
+    return rows;
+  }
+  function genHCtable(names,head,attr){
+    var hcs=distribute(head,names).sort(function(a,b){return b[1]-a[1];});
+    return hcs.map(function(x){var at=r1(attr*hf(x[0],0.9,1.12));var code=at>=16?"risk":(at>=14?"warn":"good");var lab=at>=16?"High":(at>=14?"Watch":"Stable");return [x[0],x[1],at+"%",code,lab];});
+  }
+
+  /* ---------- build a page's data for a region ---------- */
+  function buildPage(page,id){
+    var r=reg(id),all=id==="all";
+    if(page==="absence"){
+      var rate=r1(BASE.absence.rate*r.absF),cost=BASE.absence.cost*r.share,openLT=Math.round(BASE.absence.openLT*r.share),trig=Math.round(BASE.absence.trigger*r.share),days=r1(BASE.absence.days*r.absF);
+      var site=all?regs6().map(function(x){return [x.name,r1(BASE.absence.rate*x.absF)];}):distRate(rate,r.sites);
+      site.sort(function(a,b){return a[1]-b[1];});
+      return {kpi:[
+          {l:"Absence rate",v:rate+"%",d:"1.3 pts",dir:"down",good:true,s:"vs 12 months ago · target 3.0%"},
+          {l:"Cost of absence",v:money(cost),d:"lower year on year",dir:"down",good:true,s:"year to date"},
+          {l:"Open long-term",v:nf(openLT),d:"reducing",dir:"down",good:true,s:"long-term sickness"},
+          {l:"Trigger breaches",v:nf(trig),d:"watch",dir:"up",good:false,s:"this month"},
+          {l:"Days lost / FTE",v:days,d:"0.5",dir:"down",good:true,s:"rolling 12 months"}],
+        trend:BASE.absence.trend.map(function(v){return r1(v*r.absF);}),
+        site:site,reason:BASE.absence.reason,
+        split:all?BASE.absence.split:scaleFlow(BASE.absence.split,r.share),
+        cases:genAbsCases(all?regs6().map(function(x){return x.name;}):r.sites,openLT)};
+    }
+    if(page==="er"){
+      var open=Math.round(BASE.er.open*r.share),avg=BASE.er.avgAge;
+      var age=apportion(open,BASE.er.ageShares);
+      var aged=age[3][1]+age[4][1],trib=age[4][1];
+      var esite=all?regs6().map(function(x){return [x.name,Math.round(BASE.er.open*x.share)];}):distribute(open,r.sites);
+      esite.sort(function(a,b){return b[1]-a[1];});
+      return {kpi:[
+          {l:"Open cases",v:nf(open),d:"reducing",dir:"down",good:true,s:"all case types"},
+          {l:"Avg case age",v:avg+" days",d:"stable",dir:"flat",good:true,s:"time open"},
+          {l:"Aged > 60 days",v:nf(aged),d:"escalate",dir:"up",good:false,s:"61-90 plus 90+ bands"},
+          {l:"Tribunal-risk",v:nf(trib),d:"flagged",dir:"up",good:false,s:"oldest, highest risk"},
+          {l:"Resolved, no claim",v:nf(Math.max(1,Math.round(BASE.er.resolved*r.share))),d:"this year",dir:"up",good:true,s:"without a claim"}],
+        flow:all?BASE.er.flow:scaleFlow(BASE.er.flow,r.share),
+        type:all?BASE.er.type:scaleArr(BASE.er.type,r.share),
+        age:age,site:esite,
+        cases:genERcases(all?regs6().map(function(x){return x.name;}):r.sites,aged,trib)};
+    }
+    if(page==="hc"){
+      var head=Math.round(BASE.hc.head*r.share),attr=r1(BASE.hc.attr*r.attF),vol=r1(BASE.hc.vol*r.attF);
+      var hsite=all?regs6().map(function(x){return [x.name,Math.round(BASE.hc.head*x.share)];}):distribute(head,r.sites);
+      hsite.sort(function(a,b){return b[1]-a[1];});
+      return {kpi:[
+          {l:"Headcount (FTE)",v:nf(head),d:"growing",dir:"up",good:true,s:"net vs last year"},
+          {l:"Attrition (12m)",v:attr+"%",d:"improving",dir:"down",good:true,s:"target 12%"},
+          {l:"Voluntary",v:vol+"%",d:"improving",dir:"down",good:true,s:"of attrition"},
+          {l:"Internal promotions",v:BASE.hc.promo+"%",d:"6 pts",dir:"up",good:true,s:"of senior hires"},
+          {l:"Avg tenure",v:BASE.hc.tenure+" yrs",d:"steady",dir:"flat",good:true,s:"all colleagues"}],
+        trend:BASE.hc.trend.map(function(v){return r1(v*r.attF);}),
+        site:hsite,reason:BASE.hc.reason,
+        flow:all?BASE.hc.flow:scaleFlow(BASE.hc.flow,r.share),
+        table:genHCtable(all?regs6().map(function(x){return x.name;}):r.sites,head,attr)};
+    }
+    var overall=Math.min(100,BASE.train.overall+r.compD),fully=Math.min(100,BASE.train.fully+r.compD),overdue=Math.round(BASE.train.overdue*r.share),expiring=Math.round(BASE.train.expiring*r.share);
+    var tsite=all?regs6().map(function(x){return [x.name,Math.min(100,BASE.train.overall+x.compD)];}):distComp(overall,r.sites);
+    tsite.sort(function(a,b){return b[1]-a[1];});
+    var ctab=BASE.train.courseTable.map(function(row){var comp=Math.min(100,row[1]+r.compD);var code=comp>=95?"good":(comp>=90?"warn":"risk");var lab=comp>=95?"Good":(comp>=90?"Watch":"Action");return [row[0],comp+"%",Math.round(row[2]*r.share),Math.round(row[3]*r.share),code,lab];});
+    return {kpi:[
+        {l:"Overall compliance",v:overall+"%",d:"6 pts",dir:"up",good:true,s:"target 95%"},
+        {l:"Courses tracked",v:String(BASE.train.courses),d:"same",dir:"flat",good:true,s:"mandatory"},
+        {l:"Fully compliant",v:fully+"%",d:"improving",dir:"up",good:true,s:"of colleagues"},
+        {l:"Overdue",v:nf(overdue),d:"reducing",dir:"down",good:true,s:"records"},
+        {l:"Expiring 30 days",v:nf(expiring),d:"watch",dir:"up",good:false,s:"renew soon"}],
+      trend:BASE.train.trend.map(function(v){return Math.min(100,v+r.compD);}),
+      site:tsite,
+      course:BASE.train.course.map(function(x){return [x[0],Math.min(100,x[1]+r.compD)];}),
+      overdue:all?BASE.train.overdueByCourse:scaleArr(BASE.train.overdueByCourse,r.share),
+      table:ctab};
+  }
+
+  /* ---------- by-department view ---------- */
+  function renderDeptBreak(page){
+    var id=$("#region").value,unit="",target=null,items,agg;
+    if(page==="absence"){unit="%";target=3.0;agg=regAgg("absence",id);items=DEPTS.map(function(d){return {id:d.id,label:d.name,group:d.group,value:r1(agg*d.abs)};});}
+    else if(page==="hc"){agg=regAgg("hc",id);items=DEPTS.map(function(d){return {id:d.id,label:d.name,group:d.group,value:Math.round(agg*d.w)};});}
+    else if(page==="train"){unit="%";target=95;agg=regAgg("train",id);items=DEPTS.map(function(d){return {id:d.id,label:d.name,group:d.group,value:Math.min(100,agg+d.comp)};});}
+    else {agg=regAgg("er",id);var sw=DEPTS.reduce(function(a,d){return a+d.w*d.er;},0);items=DEPTS.map(function(d){return {id:d.id,label:d.name,group:d.group,value:Math.max(1,Math.round(agg*d.w*d.er/sw))};});}
+    items.sort(function(a,b){return b.value-a.value;});
+    deptBars("c_byd",items,{unit:unit,target:target,highlight:state.dept});
+    var fc=$("#deptfocus");
+    if(state.dept!=="all"){
+      var dep=DEPTS.filter(function(x){return x.id===state.dept;})[0];
+      var it=items.filter(function(x){return x.id===state.dept;})[0];
+      var txt="Focus: "+dep.name+", "+it.value+unit+(target!=null?" (target "+target+unit+")":"");
+      if(state.role!=="all"){var role=dep.roles.filter(function(rr){return rr[0]===state.role;})[0];txt="Focus: "+dep.name+" › "+state.role;
+        if(page==="hc"&&role){var sw2=dep.roles.reduce(function(a,rr){return a+rr[1];},0);txt+=", "+Math.round(regAgg("hc",id)*dep.w*role[1]/sw2)+" FTE";}}
+      fc.textContent=txt;
+    } else {fc.textContent="Showing all 11 departments. Use the Department slicer to focus on one, then the Job role slicer.";}
+  }
+
+  /* ---------- pages ---------- */
+  function pills(code,label){return '<span class="pill p-'+code+'">'+esc(label)+'</span>';}
+  function renderAbsence(d){
+    var rows=d.cases.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td class="n">'+r[1]+'</td><td class="n">'+r[2]+'</td><td>'+esc(r[3])+'</td><td>'+pills(r[4],r[5])+'</td></tr>';}).join("");
+    $("#page").innerHTML=kpiHTML(d.kpi)
+      +deptCard("Absence rate by department","Latest, with the 3.0% target. Delivery teams typically run higher than corporate.")
+      +'<div class="grid">'+card("Monthly absence rate vs target","% of working time lost, rolling 12 months.","c_trend")+card("Absence rate by site","Latest. Dashed line is the 3.0% target.","c_site")+'</div>'
+      +'<div class="grid2">'+card("Days lost by reason","Share of total days lost.","c_reason")+card("Short vs long-term","Days lost by quarter.","c_split",leg("Short-term","Long-term"))
+      +tableCard("Open long-term cases","By location, stage and risk.",'<th>Location</th><th class="n">Open</th><th class="n">Longest (wks)</th><th>Stage</th><th>Status</th>',rows)+'</div>';
+    renderDeptBreak("absence");
+    lineChart("c_trend",d.trend,{target:3.0,yMax:Math.max(5,Math.ceil(Math.max.apply(null,d.trend))),name:"Absence"});
+    hbars("c_site",d.site,{max:Math.max(5,Math.ceil(Math.max.apply(null,d.site.map(function(x){return x[1];})))),target:3.0,unit:"%",labelW:100,lowerBetter:true});
+    hbars("c_reason",d.reason,{unit:"%",labelW:112});
+    stacked("c_split",d.split,{a:"short-term",b:"long-term",unit:" days"});
+  }
+  function renderER(d){
+    var rows=d.cases.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td class="n">'+r[3]+'</td><td>'+pills(r[4],r[5])+'</td></tr>';}).join("");
+    $("#page").innerHTML=kpiHTML(d.kpi)
+      +deptCard("Open cases by department","Current caseload split across departments.")
+      +'<div class="grid">'+card("Cases opened vs closed","Last 6 months.","c_flow",leg("Opened","Closed"))+card("Open cases by type","Current caseload.","c_type")+'</div>'
+      +'<div class="grid2">'+card("Case age","Open cases by age band.","c_age")+card("Open cases by location","Current caseload.","c_ersite")
+      +tableCard("Tribunal-risk and aged cases","Open cases over 60 days. At risk are the oldest (90+ days).",'<th>Ref</th><th>Location</th><th>Type</th><th class="n">Age (d)</th><th>Status</th>',rows)+'</div>';
+    renderDeptBreak("er");
+    groupedCols("c_flow",d.flow,{a:"opened",b:"closed"});
+    hbars("c_type",d.type,{labelW:118});
+    hbars("c_age",d.age,{labelW:88});
+    hbars("c_ersite",d.site,{labelW:100});
+  }
+  function renderHC(d){
+    var rows=d.table.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td class="n">'+r[1]+'</td><td class="n">'+r[2]+'</td><td>'+pills(r[3],r[4])+'</td></tr>';}).join("");
+    $("#page").innerHTML=kpiHTML(d.kpi)
+      +deptCard("Headcount by department","Full-time equivalent across departments.")
+      +'<div class="grid">'+card("Attrition rate vs target","Rolling 12 months. Target 12%.","c_attr")+card("Headcount by location","Full-time equivalent.","c_hc")+'</div>'
+      +'<div class="grid2">'+card("Reasons for leaving","Share of leavers.","c_reason")+card("Starters vs leavers","By quarter.","c_flow",leg("Starters","Leavers"))
+      +tableCard("Attrition by location","With flight-risk flag.",'<th>Location</th><th class="n">Headcount</th><th class="n">Attrition</th><th>Risk</th>',rows)+'</div>';
+    renderDeptBreak("hc");
+    lineChart("c_attr",d.trend,{target:12,yMax:20,ticks:5,name:"Attrition"});
+    hbars("c_hc",d.site,{unit:"",labelW:100});
+    hbars("c_reason",d.reason,{unit:"%",labelW:120});
+    groupedCols("c_flow",d.flow,{a:"starters",b:"leavers"});
+  }
+  function renderTrain(d){
+    var rows=d.table.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td class="n">'+r[1]+'</td><td class="n">'+r[2]+'</td><td class="n">'+r[3]+'</td><td>'+pills(r[4],r[5])+'</td></tr>';}).join("");
+    $("#page").innerHTML=kpiHTML(d.kpi)
+      +deptCard("Compliance by department","Latest, with the 95% target.")
+      +'<div class="grid">'+card("Compliance trend vs target","Rolling 12 months. Target 95%.","c_trend")+card("Compliance by location","Latest. Dashed line is 95% target.","c_site")+'</div>'
+      +'<div class="grid2">'+card("Compliance by course","Dashed line is 95% target.","c_course")+card("Overdue records by course","Where the gap is.","c_over")
+      +tableCard("Course detail","Compliance, overdue and renewals.",'<th>Course</th><th class="n">Compliant</th><th class="n">Overdue</th><th class="n">Exp. 30d</th><th>Status</th>',rows)+'</div>';
+    renderDeptBreak("train");
+    lineChart("c_trend",d.trend,{target:95,yMax:100,ticks:5,name:"Compliance"});
+    hbars("c_site",d.site,{max:100,target:95,unit:"%",labelW:100,lowerBetter:false});
+    hbars("c_course",d.course,{max:100,target:95,unit:"%",labelW:128,lowerBetter:false});
+    hbars("c_over",d.overdue,{labelW:128});
+  }
+
+  var PAGES=[{id:"absence",name:"Absence",sub:"Absence & attendance",fn:renderAbsence},
+    {id:"er",name:"Employee Relations",sub:"ER caseload & risk",fn:renderER},
+    {id:"hc",name:"Headcount & Attrition",sub:"Workforce & retention",fn:renderHC},
+    {id:"train",name:"Training Compliance",sub:"Mandatory training",fn:renderTrain}];
+  var cur="absence";
+  var state={dept:"all",role:"all"};
+  function populateRoles(){
+    var rsel=$("#role");
+    if(state.dept==="all"){rsel.innerHTML='<option value="all">All roles</option>';rsel.disabled=true;rsel.value="all";state.role="all";return;}
+    rsel.disabled=false;
+    var dep=DEPTS.filter(function(x){return x.id===state.dept;})[0];
+    rsel.innerHTML='<option value="all">All roles in '+esc(dep.name)+'</option>'+dep.roles.map(function(r){return '<option value="'+esc(r[0])+'">'+esc(r[0])+'</option>';}).join("");
+    if(!dep.roles.some(function(r){return r[0]===state.role;}))state.role="all";
+    rsel.value=state.role;
+  }
+  function draw(){var p=PAGES.filter(function(x){return x.id===cur;})[0];
+    $("#bandsub").textContent=p.sub;p.fn(buildPage(p.id,$("#region").value));
+    $("#foot").textContent="Illustrative sample data built to demonstrate dashboard design across the HR areas this role covers. These are not Omexom figures. Region, Department and Job role slicers and the page tabs are live; hover any chart for detail. Built in Omexom brand colours (primary #0071CE).";}
+  $("#tabs").innerHTML=PAGES.map(function(p){return '<button class="tab" role="tab" data-id="'+p.id+'" aria-selected="'+(p.id===cur)+'">'+p.name+'</button>';}).join("");
+  $("#tabs").addEventListener("click",function(e){var b=e.target.closest(".tab");if(!b)return;cur=b.getAttribute("data-id");
+    $("#tabs").querySelectorAll(".tab").forEach(function(t){t.setAttribute("aria-selected",t===b);});draw();});
+  var rs=$("#region");
+  rs.innerHTML=REGIONS.map(function(r){return '<option value="'+r.id+'">'+esc(r.name)+'</option>';}).join("");
+  rs.addEventListener("change",draw);
+  var ds=$("#dept");
+  ds.innerHTML='<option value="all">All departments</option>'+DEPTS.map(function(d){return '<option value="'+d.id+'">'+esc(d.name)+'</option>';}).join("");
+  ds.addEventListener("change",function(){state.dept=this.value;state.role="all";populateRoles();draw();});
+  $("#role").addEventListener("change",function(){state.role=this.value;draw();});
+  populateRoles();
+  var tb=$("#theme");
+  function applyTheme(t){document.documentElement.setAttribute("data-theme",t);tb.textContent=t==="dark"?"Light":"Dark";}
+  var saved;try{saved=localStorage.getItem("omx-theme");}catch(e){}if(saved)applyTheme(saved);
+  tb.addEventListener("click",function(){var c=document.documentElement.getAttribute("data-theme");
+    var nx=c==="dark"?"light":(c==="light"?"dark":(matchMedia("(prefers-color-scheme:dark)").matches?"light":"dark"));
+    applyTheme(nx);try{localStorage.setItem("omx-theme",nx);}catch(e){}draw();});
+  draw();
+})();
+</script>

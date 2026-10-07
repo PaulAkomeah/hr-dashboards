@@ -1,0 +1,244 @@
+<title>Workforce Explorer</title>
+<style>
+  /* Layout: workforce org explorer. Region slicer, KPI tiles, department bars (click to drill), region bars, roles table. Omexom brand tokens. */
+  :root{
+    --bg:#eef1f4; --surface:#ffffff; --surface-2:#f6f8fa;
+    --ink:#182230; --muted:#5b6670; --faint:#8a94a0;
+    --grid:#e7ebef; --border:#e1e6ea;
+    --brand:#0071ce; --brand-deep:#005ca8; --cyan:#00a7c6; --amber:#e39a00;
+    --band:#0071ce; --band-ink:#ffffff; --band-sub:#cfe6fb;
+    --shadow:0 1px 2px rgba(16,38,60,.06),0 2px 10px rgba(16,38,60,.05);
+    --r:10px; --f:"Arial","Helvetica Neue",Helvetica,system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0e141b; --surface:#161e27; --surface-2:#121922;
+    --ink:#e8edf2; --muted:#9aa6b2; --faint:#73808d;
+    --grid:#243039; --border:#263340;
+    --brand:#2e9be6; --brand-deep:#5bb4ef; --cyan:#35c6e0; --amber:#ffc23f;
+    --band:#0b2740; --band-ink:#ffffff; --band-sub:#bcd6ef;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 2px 12px rgba(0,0,0,.35); color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0e141b; --surface:#161e27; --surface-2:#121922;
+    --ink:#e8edf2; --muted:#9aa6b2; --faint:#73808d;
+    --grid:#243039; --border:#263340;
+    --brand:#2e9be6; --brand-deep:#5bb4ef; --cyan:#35c6e0; --amber:#ffc23f;
+    --band:#0b2740; --band-ink:#ffffff; --band-sub:#bcd6ef;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 2px 12px rgba(0,0,0,.35); color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.4}
+  .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:0 28px}
+  .band{background:var(--band);color:var(--band-ink);border-radius:0 0 14px 14px;padding:16px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .mark{font-weight:700;letter-spacing:.14em;font-size:20px}
+  .band h1{font-size:15px;font-weight:700;margin:0;line-height:1.2}
+  .band .sub{color:var(--band-sub);font-size:12px;margin-top:2px}
+  .band .spacer{flex:1 1 40px}
+  .badge{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;letter-spacing:.04em}
+  .tbtn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.32);border-radius:8px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer}
+  .tbtn:hover{background:rgba(255,255,255,.26)}
+  .slicers{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:16px 0 2px}
+  .slicer{display:flex;flex-direction:column;gap:4px}
+  .slicer label{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .slicer select{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;font-family:var(--f);min-width:200px;box-shadow:var(--shadow)}
+  .slicer select:focus-visible,.tbtn:focus-visible,.chipbtn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .chipbtn{align-self:flex-end;background:var(--surface);color:var(--brand-deep);border:1px solid var(--brand);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:14px 0}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand)}
+  .kpi.alt::before{background:var(--cyan)}
+  .kpi .k-l{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .kpi .k-v{font-size:26px;font-weight:700;margin:4px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .kpi .k-s{font-size:11px;color:var(--faint)}
+  .grid{display:grid;grid-template-columns:1.6fr 1fr;gap:12px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px 12px;box-shadow:var(--shadow);min-width:0;margin-top:12px}
+  .card h2{font-size:13px;margin:0 0 2px;font-weight:700}
+  .card .h-sub{font-size:11px;color:var(--faint);margin:0 0 8px}
+  .legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin:2px 0 6px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .ax{fill:var(--muted);font-size:11px} .vlab{fill:var(--ink);font-size:11px;font-weight:700}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--border)}
+  th{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  .grp{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700}
+  .g-del{background:#e4f0fb;color:#0a5ea8} .g-cor{background:#e2f6fa;color:#0a7488}
+  :root[data-theme="dark"] .g-del,:root:not([data-theme="light"]) .g-del{background:#143049;color:#79b8e8}
+  :root[data-theme="dark"] .g-cor,:root:not([data-theme="light"]) .g-cor{background:#113038;color:#4fc6dd}
+  .mbar{height:8px;border-radius:4px;background:var(--brand);display:inline-block;vertical-align:middle}
+  .mbar.cor{background:var(--cyan)}
+  .note{font-size:11px;color:var(--faint);margin-top:16px;line-height:1.5}
+  #tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--surface);padding:6px 9px;border-radius:7px;font-size:12px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;transition:opacity .08s;white-space:nowrap}
+  #tip .t2{font-weight:400;opacity:.85}
+  .bar{cursor:pointer}
+  @media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)} .grid{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="band">
+  <span class="mark">OMEXOM</span>
+  <div><h1>Workforce &amp; Org Structure</h1><div class="sub">Regions, departments and roles</div></div>
+  <span class="spacer"></span>
+  <span class="badge">Illustrative sample data</span>
+  <button class="tbtn" id="theme" type="button" aria-label="Toggle light or dark theme">Dark</button>
+</div>
+
+<div class="wrap">
+  <div class="slicers">
+    <div class="slicer">
+      <label for="region">Region</label>
+      <select id="region"></select>
+    </div>
+    <button class="chipbtn" id="clear" type="button" hidden>Roles filter: <span id="clearname"></span> &times;</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Headcount by department</h2>
+      <p class="h-sub">Click a department bar to see the roles within it.</p>
+      <div class="legend"><span><i style="background:var(--brand)"></i>Delivery</span><span><i style="background:var(--cyan)"></i>Corporate</span></div>
+      <div id="c_dept"></div>
+    </div>
+    <div class="card">
+      <h2>Headcount by region</h2>
+      <p class="h-sub">Across the UK and Ireland.</p>
+      <div id="c_region"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 id="rolestitle">All roles</h2>
+    <p class="h-sub" id="rolessub">Every role type, grouped by department.</p>
+    <div style="overflow-x:auto"><table><thead><tr>
+      <th>Department</th><th>Role</th><th>Group</th><th class="n">Headcount</th><th style="width:120px">Share</th>
+    </tr></thead><tbody id="rolesbody"></tbody></table></div>
+  </div>
+
+  <p class="note" id="foot"></p>
+</div>
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(s){return document.querySelector(s);};
+  var tip=$("#tip");
+  function showTip(h,x,y){tip.innerHTML=h;tip.style.opacity="1";var w=tip.offsetWidth,ht=tip.offsetHeight;var px=x+14;if(px+w>innerWidth-8)px=x-w-14;var py=y-ht-10;if(py<8)py=y+18;tip.style.left=px+"px";tip.style.top=py+"px";}
+  function hideTip(){tip.style.opacity="0";}
+  function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+  function nf(n){return n.toLocaleString("en-GB");}
+
+  var BASE=820;
+  var REGIONS=[
+    {id:"sco",name:"Scotland",scale:1.25},
+    {id:"nor",name:"North of England",scale:0.90},
+    {id:"mid",name:"Midlands & East",scale:1.10},
+    {id:"lon",name:"London & South East",scale:0.85},
+    {id:"wal",name:"Wales & West",scale:0.80},
+    {id:"irl",name:"Ireland",scale:0.95}
+  ];
+  var DEPTS=[
+    {name:"Construction & Site",group:"Delivery",w:0.28,roles:[["Construction Manager",2],["Site Manager",4],["Civils Site Engineer",6],["Overhead Linesperson",10],["Cable Jointer",7],["Substation Fitter",7]]},
+    {name:"Project Management",group:"Delivery",w:0.15,roles:[["Project Director",1],["Senior Project Manager",3],["Project Manager",6],["Project Engineer",7],["Graduate Project Manager",3]]},
+    {name:"Engineering & Design",group:"Delivery",w:0.13,roles:[["Design Manager",1],["Senior Design Engineer",3],["Design Engineer",6],["Protection & Control Engineer",3],["CAD Technician",3]]},
+    {name:"Commercial & Estimating",group:"Delivery",w:0.08,roles:[["Commercial Manager",1],["Senior Quantity Surveyor",2],["Quantity Surveyor",4],["Estimator",3],["Bid Manager",1]]},
+    {name:"Commissioning & Testing",group:"Delivery",w:0.07,roles:[["Commissioning Manager",1],["Commissioning Engineer",4],["Test Technician",4]]},
+    {name:"SHEQ",group:"Delivery",w:0.06,roles:[["SHEQ Manager",1],["Health & Safety Advisor",4],["Environmental Advisor",2],["Quality Engineer",2]]},
+    {name:"Finance",group:"Corporate",w:0.06,roles:[["Finance Director",1],["Financial Controller",1],["Management Accountant",3],["Accounts Assistant",4],["Payroll Officer",2]]},
+    {name:"HR / People",group:"Corporate",w:0.05,roles:[["Head of HR",1],["Regional HR Manager",1],["HR Business Partner",3],["HR Advisor",4],["L&D Advisor",2]]},
+    {name:"Procurement & Supply Chain",group:"Corporate",w:0.045,roles:[["Procurement Manager",1],["Buyer",4],["Supply Chain Coordinator",3]]},
+    {name:"IT & Digital",group:"Corporate",w:0.04,roles:[["IT Manager",1],["IT Support Technician",4],["Data / BI Analyst",2]]},
+    {name:"Marketing & Communications",group:"Corporate",w:0.035,roles:[["Marketing Manager",1],["Communications Officer",2],["Digital Marketing Executive",2],["Bid Writer",2]]}
+  ];
+  var ROLE_TYPES=DEPTS.reduce(function(a,d){return a+d.roles.length;},0);
+
+  function rbase(reg){return Math.round(reg.scale*BASE);}
+  function roleHCforRegion(reg,dept,role){var s=dept.roles.reduce(function(a,r){return a+r[1];},0);return Math.max(1,Math.round(rbase(reg)*dept.w*role[1]/s));}
+  function roleHC(scope,dept,role){
+    if(scope==="all")return REGIONS.reduce(function(a,reg){return a+roleHCforRegion(reg,dept,role);},0);
+    var reg=REGIONS.filter(function(r){return r.id===scope;})[0];return roleHCforRegion(reg,dept,role);
+  }
+  function deptTotal(scope,dept){return dept.roles.reduce(function(a,r){return a+roleHC(scope,dept,r);},0);}
+  function regionTotal(regId){var reg=REGIONS.filter(function(r){return r.id===regId;})[0];return DEPTS.reduce(function(a,d){return a+d.roles.reduce(function(b,r){return b+roleHCforRegion(reg,d,r);},0);},0);}
+
+  var state={region:"all",dept:null};
+
+  // region dropdown
+  var rs=$("#region");
+  rs.innerHTML='<option value="all">All UK &amp; Ireland</option>'+REGIONS.map(function(r){return '<option value="'+r.id+'">'+esc(r.name)+'</option>';}).join("");
+
+  function bars(id,items,o){
+    o=o||{};var W=o.w||360,rowH=o.rowH||30,padT=6,L=o.labelW||150,R=52,pw=W-L-R,H=padT+items.length*rowH+6;
+    var max=Math.max.apply(null,items.map(function(x){return x.value;}));
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Bar chart">';
+    items.forEach(function(it,i){
+      var y=padT+i*rowH,bw=Math.max(pw*it.value/max,2);
+      var fill=it.group==="Corporate"?"var(--cyan)":"var(--brand)";
+      var faded=(o.highlight&&o.highlight!==it.key)?' opacity="0.45"':'';
+      s+='<text class="ax" x="'+(L-8)+'" y="'+(y+rowH/2+4)+'" text-anchor="end">'+esc(it.label)+'</text>';
+      s+='<rect class="bar" x="'+L+'" y="'+(y+5)+'" width="'+bw+'" height="'+(rowH-12)+'" rx="4" fill="'+fill+'"'+faded+' data-key="'+esc(it.key||it.label)+'" data-l="'+esc(it.label)+'" data-v="'+it.value+'"/>';
+      s+='<text x="'+(L+bw+6)+'" y="'+(y+rowH/2+4)+'" class="vlab">'+nf(it.value)+'</text>';
+    });
+    s+='</svg>';
+    var el=$("#"+id);el.innerHTML=s;
+    el.querySelectorAll(".bar").forEach(function(m){
+      m.addEventListener("mousemove",function(e){showTip(esc(m.getAttribute("data-l"))+'<br><span class="t2">'+nf(+m.getAttribute("data-v"))+' people</span>',e.clientX,e.clientY);});
+      m.addEventListener("mouseleave",hideTip);
+      if(o.onClick)m.addEventListener("click",function(){o.onClick(m.getAttribute("data-key"));});
+    });
+  }
+
+  function render(){
+    var scope=state.region;
+    // dept totals
+    var depts=DEPTS.map(function(d){return {name:d.name,group:d.group,total:deptTotal(scope,d)};});
+    var total=depts.reduce(function(a,d){return a+d.total;},0);
+    var del=depts.filter(function(d){return d.group==="Delivery";}).reduce(function(a,d){return a+d.total;},0);
+    var delPct=Math.round(del/total*100), corPct=100-delPct;
+    // kpis
+    var regLabel=scope==="all"?"6 regions":REGIONS.filter(function(r){return r.id===scope;})[0].name;
+    $("#kpis").innerHTML=[
+      {l:"Headcount",v:nf(total),s:regLabel,alt:false},
+      {l:"Departments",v:"11",s:"6 delivery, 5 corporate",alt:true},
+      {l:"Role types",v:String(ROLE_TYPES),s:"distinct job roles",alt:false},
+      {l:"Delivery share",v:delPct+"%",s:"of the workforce",alt:false},
+      {l:"Corporate share",v:corPct+"%",s:"support functions",alt:true}
+    ].map(function(k){return '<div class="kpi'+(k.alt?' alt':'')+'"><div class="k-l">'+k.l+'</div><div class="k-v">'+k.v+'</div><div class="k-s">'+k.s+'</div></div>';}).join("");
+    // dept bars (sorted desc)
+    var deptItems=depts.slice().sort(function(a,b){return b.total-a.total;}).map(function(d){return {label:d.name,value:d.total,group:d.group,key:d.name};});
+    bars("c_dept",deptItems,{w:380,rowH:30,labelW:170,highlight:state.dept,onClick:function(name){state.dept=(state.dept===name)?null:name;render();}});
+    // region bars (always all regions; highlight selected)
+    var regItems=REGIONS.map(function(r){return {label:r.name,value:regionTotal(r.id),group:"Delivery",key:r.id};}).sort(function(a,b){return b.value-a.value;});
+    bars("c_region",regItems,{w:360,rowH:30,labelW:150,highlight:state.region==="all"?null:state.region,onClick:function(id){state.region=(state.region===id)?"all":id;rs.value=state.region;state.dept=null;render();}});
+    // roles table
+    var rows=[];
+    DEPTS.forEach(function(d){
+      if(state.dept&&d.name!==state.dept)return;
+      d.roles.forEach(function(r){rows.push({dept:d.name,group:d.group,role:r[0],hc:roleHC(scope,d,r)});});
+    });
+    rows.sort(function(a,b){return b.hc-a.hc;});
+    var maxhc=Math.max.apply(null,rows.map(function(r){return r.hc;}));
+    $("#rolestitle").textContent=state.dept?("Roles in "+state.dept):"All roles";
+    $("#rolessub").textContent=state.dept?("Headcount for "+regLabel+".") :("Every role type, "+regLabel+". Click a department bar to focus.");
+    $("#rolesbody").innerHTML=rows.map(function(r){
+      var w=Math.max(6,Math.round(110*r.hc/maxhc));
+      return '<tr><td>'+esc(r.dept)+'</td><td>'+esc(r.role)+'</td><td><span class="grp '+(r.group==="Corporate"?"g-cor":"g-del")+'">'+r.group+'</span></td><td class="n">'+nf(r.hc)+'</td><td><span class="mbar'+(r.group==="Corporate"?" cor":"")+'" style="width:'+w+'px"></span></td></tr>';
+    }).join("");
+    // clear chip
+    var cl=$("#clear");
+    if(state.dept){cl.hidden=false;$("#clearname").textContent=state.dept;}else{cl.hidden=true;}
+    $("#foot").textContent="Illustrative sample data built to demonstrate dashboard design. These are not Omexom's real headcount figures. Roles and departments are drawn from Omexom UK & RoI's published job types and business areas. Region slicer and the department bars are live; click a department to drill into its roles.";
+  }
+
+  rs.addEventListener("change",function(){state.region=this.value;state.dept=null;render();});
+  $("#clear").addEventListener("click",function(){state.dept=null;render();});
+  var tb=$("#theme");
+  function applyTheme(t){document.documentElement.setAttribute("data-theme",t);tb.textContent=t==="dark"?"Light":"Dark";}
+  var saved;try{saved=localStorage.getItem("omx-theme");}catch(e){}if(saved)applyTheme(saved);
+  tb.addEventListener("click",function(){var c=document.documentElement.getAttribute("data-theme");var nx=c==="dark"?"light":(c==="light"?"dark":(matchMedia("(prefers-color-scheme:dark)").matches?"light":"dark"));applyTheme(nx);try{localStorage.setItem("omx-theme",nx);}catch(e){}});
+  render();
+})();
+</script>
