@@ -169,48 +169,55 @@ var M=(function(){
     return out;}
   function sample(total,w){var out=w.map(function(){return 0;}),idx=w.map(function(x,i){return i;});for(var i=0;i<total;i++)out[pick(idx,w)]++;return out;}
 
-  var WORKDAYS=228,COST_PER_DAY=140,BASE_HC=850;
+  var WORKDAYS=228,COST_PER_DAY=140,BASE_HC=852;
   var REGIONS=[
-    {id:"sco",name:"Scotland",scale:1.25,absF:1.08,attF:1.05,compD:-3,tthF:1.08,sites:["Inverness","Aberdeen","Glasgow","Edinburgh","Dundee"]},
+    {id:"sco",name:"Scotland",scale:1.249,absF:1.08,attF:1.05,compD:-3,tthF:1.08,sites:["Inverness","Aberdeen","Glasgow","Edinburgh","Dundee"]},
     {id:"nor",name:"North of England",scale:0.90,absF:0.98,attF:1.00,compD:-1,tthF:1.00,sites:["Newcastle","Leeds","Manchester","Sheffield","Hull"]},
     {id:"mid",name:"Midlands & East",scale:1.10,absF:0.95,attF:0.97,compD:1,tthF:0.96,sites:["Birmingham","Leicester","Nottingham","Coventry","Derby","Peterborough"]},
     {id:"lon",name:"London & South East",scale:0.85,absF:0.97,attF:1.05,compD:2,tthF:1.06,sites:["London","Reading","Crawley","Maidstone","Chelmsford"]},
     {id:"wal",name:"Wales & West",scale:0.80,absF:1.00,attF:0.98,compD:0,tthF:0.98,sites:["Cardiff","Bristol","Swansea","Gloucester","Exeter"]},
     {id:"irl",name:"Ireland",scale:0.95,absF:1.02,attF:0.95,compD:1,tthF:0.95,sites:["Belfast","Dublin","Cork","Galway","Limerick"]}
   ];
+  /* roles: [name, weight] scales with the region; [name, n, "R"] is a fixed number per region; [name, 1, "U"] is one post for the whole of UK & Ireland */
+  var HOME="mid";
   var DEPTS=[
-    {id:"con",name:"Construction & Site",short:"Construction",group:"Delivery",w:0.28,abs:1.5,att:1.15,comp:-4,er:1.4,tth:0.95,roles:[["Construction Manager",2],["Site Manager",4],["Civils Site Engineer",6],["Overhead Linesperson",10],["Cable Jointer",7],["Substation Fitter",7]]},
-    {id:"pm",name:"Project Management",short:"Project Mgmt",group:"Delivery",w:0.15,abs:0.8,att:0.95,comp:1,er:0.8,tth:1.05,roles:[["Project Director",1],["Senior Project Manager",3],["Project Manager",6],["Project Engineer",7],["Graduate Project Manager",3]]},
-    {id:"eng",name:"Engineering & Design",short:"Engineering",group:"Delivery",w:0.13,abs:0.7,att:0.90,comp:1,er:0.7,tth:1.25,roles:[["Design Manager",1],["Senior Design Engineer",3],["Design Engineer",6],["Protection & Control Engineer",3],["CAD Technician",3]]},
-    {id:"com",name:"Commercial & Estimating",short:"Commercial",group:"Delivery",w:0.08,abs:0.8,att:1.00,comp:0,er:0.8,tth:1.10,roles:[["Commercial Manager",1],["Senior Quantity Surveyor",2],["Quantity Surveyor",4],["Estimator",3],["Bid Manager",1]]},
-    {id:"cmg",name:"Commissioning & Testing",short:"Commissioning",group:"Delivery",w:0.07,abs:1.3,att:1.05,comp:-2,er:1.1,tth:1.15,roles:[["Commissioning Manager",1],["Commissioning Engineer",4],["Test Technician",4]]},
-    {id:"shq",name:"SHEQ",short:"SHEQ",group:"Delivery",w:0.06,abs:1.1,att:0.90,comp:3,er:0.9,tth:1.00,roles:[["SHEQ Manager",1],["Health & Safety Advisor",4],["Environmental Advisor",2],["Quality Engineer",2]]},
-    {id:"fin",name:"Finance",short:"Finance",group:"Corporate",w:0.06,abs:0.75,att:0.85,comp:3,er:0.7,tth:0.90,roles:[["Finance Director",1],["Financial Controller",1],["Management Accountant",3],["Accounts Assistant",4],["Payroll Officer",2]]},
-    {id:"hr",name:"HR / People",short:"HR / People",group:"Corporate",w:0.05,abs:0.8,att:0.85,comp:4,er:0.8,tth:0.85,roles:[["Head of HR",1],["Regional HR Manager",1],["HR Business Partner",3],["HR Advisor",4],["L&D Advisor",2]]},
-    {id:"pro",name:"Procurement & Supply Chain",short:"Procurement",group:"Corporate",w:0.045,abs:0.85,att:0.95,comp:1,er:0.85,tth:0.90,roles:[["Procurement Manager",1],["Buyer",4],["Supply Chain Coordinator",3]]},
-    {id:"it",name:"IT & Digital",short:"IT & Digital",group:"Corporate",w:0.04,abs:0.7,att:1.05,comp:2,er:0.7,tth:1.00,roles:[["IT Manager",1],["IT Support Technician",4],["Data / BI Analyst",2]]},
-    {id:"mkt",name:"Marketing & Communications",short:"Marketing",group:"Corporate",w:0.035,abs:0.75,att:1.00,comp:2,er:0.75,tth:0.90,roles:[["Marketing Manager",1],["Communications Officer",2],["Digital Marketing Executive",2],["Bid Writer",2]]}
+    {id:"con",name:"Construction & Site",short:"Construction",group:"Delivery",w:0.415,abs:1.5,att:1.15,comp:-4,er:1.4,tth:0.95,roles:[["Construction Manager",1.5],["Site Manager",4],["Civils Site Engineer",6],["Overhead Linesperson",12],["Cable Jointer",9],["Substation Fitter",8]]},
+    {id:"pm",name:"Project Management",short:"Project Mgmt",group:"Delivery",w:0.16,abs:0.8,att:0.95,comp:1,er:0.8,tth:1.05,roles:[["Project Director",2,"R"],["Senior Project Manager",3],["Project Manager",6],["Project Engineer",7],["Graduate Project Manager",2]]},
+    {id:"eng",name:"Engineering & Design",short:"Engineering",group:"Delivery",w:0.14,abs:0.7,att:0.90,comp:1,er:0.7,tth:1.25,roles:[["Design Manager",1,"R"],["Senior Design Engineer",3],["Design Engineer",6],["Protection & Control Engineer",3],["CAD Technician",3]]},
+    {id:"com",name:"Commercial & Estimating",short:"Commercial",group:"Delivery",w:0.085,abs:0.8,att:1.00,comp:0,er:0.8,tth:1.10,roles:[["Commercial Manager",1,"R"],["Bid Manager",1,"R"],["Senior Quantity Surveyor",2],["Quantity Surveyor",4],["Estimator",3]]},
+    {id:"cmg",name:"Commissioning & Testing",short:"Commissioning",group:"Delivery",w:0.08,abs:1.3,att:1.05,comp:-2,er:1.1,tth:1.15,roles:[["Commissioning Manager",1,"R"],["Commissioning Engineer",4],["Test Technician",4]]},
+    {id:"shq",name:"SHEQ",short:"SHEQ",group:"Delivery",w:0.025,abs:1.1,att:0.90,comp:3,er:0.9,tth:1.00,roles:[["SHEQ Manager",1,"R"],["Health & Safety Advisor",4],["Environmental Advisor",1.5],["Quality Engineer",1.5]]},
+    {id:"fin",name:"Finance",short:"Finance",group:"Corporate",w:0.025,abs:0.75,att:0.85,comp:3,er:0.7,tth:0.90,roles:[["Finance Director",1,"U"],["Financial Controller",1,"R"],["Management Accountant",3],["Accounts Assistant",4],["Payroll Officer",2]]},
+    {id:"hr",name:"HR / People",short:"HR / People",group:"Corporate",w:0.015,abs:0.8,att:0.85,comp:4,er:0.8,tth:0.85,roles:[["Head of HR",1,"U"],["Regional HR Manager",1,"R"],["HR Business Partner",2],["HR Advisor",4],["L&D Advisor",1.5]]},
+    {id:"pro",name:"Procurement & Supply Chain",short:"Procurement",group:"Corporate",w:0.025,abs:0.85,att:0.95,comp:1,er:0.85,tth:0.90,roles:[["Procurement Manager",1,"R"],["Buyer",4],["Supply Chain Coordinator",3]]},
+    {id:"it",name:"IT & Digital",short:"IT & Digital",group:"Corporate",w:0.02,abs:0.7,att:1.05,comp:2,er:0.7,tth:1.00,roles:[["IT Manager",1,"U"],["IT Support Technician",4],["Data / BI Analyst",1.5]]},
+    {id:"mkt",name:"Marketing & Communications",short:"Marketing",group:"Corporate",w:0.01,abs:0.75,att:1.00,comp:2,er:0.75,tth:0.90,roles:[["Marketing Manager",1,"U"],["Communications Officer",2],["Digital Marketing Executive",2],["Bid Writer",3]]}
   ];
   var RMAP={},DMAP={};REGIONS.forEach(function(r){RMAP[r.id]=r;});DEPTS.forEach(function(d){DMAP[d.id]=d;});
 
-  /* invented names: none of these are real colleagues */
-  var FIRST=["Moira","Tomasz","Dervla","Callum","Priya","Gethin","Aoife","Marek","Shona","Kwame","Elin","Ruairi","Farah","Angus","Bronagh","Dawid","Nia","Fergus","Sunita","Iestyn","Orla","Lachlan","Zainab","Hywel","Catriona","Piotr","Niamh","Hamish","Amara","Rhodri","Sinead","Greig","Leila","Owain","Mhairi","Kofi","Eira","Declan","Yasmin","Struan","Carys","Emeka","Fionnuala","Ivo"];
-  var LAST=["Kessock","Brylka","Quillan","Tarbert","Vasani","Penhallow","Corrigle","Stanek","Abernyte","Oduya","Trevethan","Mullarney","Zaheer","Balcomie","Fennick","Wojtas","Pencarrow","Dunlossit","Radia","Aberdaron","Kilbride","Strathnaver","Okonjo","Llanrhos","Garvock","Halloran","Ostrowe","Tregear","Ballantrae","Musoke","Inverarity","Carnduff","Hesketh","Polglaze","Drumlin","Achebe","Skerray","Maddocks","Lisburne","Kowalczyk","Fintry","Rosemullion","Tullis","Egerton","Bavidge","Nethercote"];
+  /* invented names: none of these are real colleagues. 72 x 72 combinations, each used once at most */
+  var FIRST=["Moira","Tomasz","Dervla","Callum","Priya","Gethin","Aoife","Marek","Shona","Kwame","Elin","Ruairi","Farah","Angus","Bronagh","Dawid","Nia","Fergus","Sunita","Iestyn","Orla","Lachlan","Zainab","Hywel","Catriona","Piotr","Niamh","Hamish","Amara","Rhodri","Sinead","Greig","Leila","Owain","Mhairi","Kofi","Eira","Declan","Yasmin","Struan","Carys","Emeka","Fionnuala","Ivo","Ailsa","Bartek","Cerys","Dougal","Esme","Finlay","Gwenan","Harun","Isla","Jarlath","Keziah","Lorcan","Morven","Nadim","Oonagh","Padraig","Rhian","Seren","Tavish","Una","Vikram","Wynne","Zofia","Aled","Brodie","Clodagh","Darragh","Eilidh"];
+  var LAST=["Kessock","Brylka","Quillan","Tarbert","Vasani","Penhallow","Corrigle","Stanek","Abernyte","Oduya","Trevethan","Mullarney","Zaheer","Balcomie","Fennick","Wojtas","Pencarrow","Dunlossit","Radia","Aberdaron","Kilbride","Strathnaver","Okonjo","Llanrhos","Garvock","Halloran","Ostrowe","Tregear","Ballantrae","Musoke","Inverarity","Carnduff","Hesketh","Polglaze","Drumlin","Achebe","Skerray","Maddocks","Lisburne","Kowalczyk","Fintry","Rosemullion","Tullis","Egerton","Bavidge","Nethercote","Ardross","Bethune","Cadwallon","Dalwhinnie","Eskdale","Farquharson","Glenorchy","Hawksworth","Imrie","Jesmond","Kinloss","Lanyon","Mawdsley","Nancarrow","Ormiston","Pitlochrie","Quennell","Rathlin","Sandilands","Tintagel","Ullapool","Varley","Wetherden","Yarrow","Zelazny","Ancrum"];
 
-  /* headcount cells: region x department x role */
+  /* headcount cells: region x department x role. Department totals come first; fixed posts are taken out, then the rest is shared between the other roles */
   var CELLS=[];
   REGIONS.forEach(function(r){var rb=Math.round(r.scale*BASE_HC);
-    DEPTS.forEach(function(d){var s=d.roles.reduce(function(a,x){return a+x[1];},0);
-      d.roles.forEach(function(role){CELLS.push({r:r.id,d:d.id,role:role[0],hc:Math.max(1,Math.round(rb*d.w*role[1]/s)),people:[]});});});});
+    DEPTS.forEach(function(d){var dhc=Math.round(rb*d.w),fixed=d.roles.map(function(x){return x[2]==="R"?x[1]:(x[2]==="U"?(r.id===HOME?1:0):0);});
+      var rem=dhc-fixed.reduce(function(a,b){return a+b;},0),sh=alloc(Math.max(0,rem),d.roles.map(function(x){return x[2]?0:x[1];}));
+      d.roles.forEach(function(role,i){var hc=fixed[i]+sh[i];if(hc>0)CELLS.push({r:r.id,d:d.id,role:role[0],hc:hc,people:[]});});});});
   var TOTAL=CELLS.reduce(function(a,c){return a+c.hc;},0);
   function siteW(r){return r.sites.map(function(s){return hf(s,0.6,1.4);});}
 
-  /* colleagues */
+  /* colleagues: every name is unique */
   var PEOPLE=[];
-  CELLS.forEach(function(c,ci){var r=RMAP[c.r],sw=siteW(r);
-    for(var i=0;i<c.hc;i++){var u=rnd(),ten=u<0.14?rnd():Math.min(38,1-Math.log(1-rnd())*5.9);
-      var p={ci:ci,name:FIRST[Math.floor(rnd()*FIRST.length)]+" "+LAST[Math.floor(rnd()*LAST.length)],site:pick(r.sites,sw),role:c.role,tenure:ten};
-      c.people.push(p);PEOPLE.push(p);}});
+  (function(){var pairs=[],i;for(i=0;i<FIRST.length*LAST.length;i++)pairs.push(i);
+    for(i=pairs.length-1;i>0;i--){var j=Math.floor(rnd()*(i+1)),t=pairs[i];pairs[i]=pairs[j];pairs[j]=t;}
+    var k=0;
+    CELLS.forEach(function(c,ci){var r=RMAP[c.r],sw=siteW(r),grad=/Graduate/.test(c.role);
+      for(var n=0;n<c.hc;n++){var u=rnd(),ten=grad?rnd()*2.5:(u<0.165?rnd():1-Math.log(1-rnd())*6.0);
+        if(ten>36)ten=28+rnd()*10;var pr=pairs[k++%pairs.length];
+        var p={ci:ci,name:FIRST[pr%FIRST.length]+" "+LAST[Math.floor(pr/FIRST.length)],site:pick(r.sites,sw),role:c.role,tenure:ten,late:rnd()<0.3?6:0.4,od:0};
+        c.people.push(p);PEOPLE.push(p);}});})();
 
   var QTR=["Oct-Dec","Jan-Mar","Apr-Jun","Jul-Sep"];
   var MONS=["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"];
@@ -221,8 +228,7 @@ var M=(function(){
   var wAbs=CELLS.map(function(c){return c.hc*RMAP[c.r].absF*DMAP[c.d].abs;});
   var wEr=CELLS.map(function(c){return c.hc*DMAP[c.d].er;});
   var wAtt=CELLS.map(function(c){return c.hc*RMAP[c.r].attF*DMAP[c.d].att;});
-  var LEVEL=CELLS.map(function(c){return Math.max(60,Math.min(100,90+RMAP[c.r].compD+DMAP[c.d].comp+hf(c.role,-1,1)));});
-  var wTr=CELLS.map(function(c,i){return c.hc*(100-LEVEL[i]);});
+  var LEVEL=CELLS.map(function(c){return Math.max(60,Math.min(99,91+RMAP[c.r].compD+DMAP[c.d].comp+hf(c.role,-1,1)));});
   var TTH=CELLS.map(function(c){return 46*RMAP[c.r].tthF*DMAP[c.d].tth;});
 
   /* absence */
@@ -240,19 +246,29 @@ var M=(function(){
   LTS.sort(function(a,b){return b.weeks-a.weeks;});LTS.forEach(function(x,i){x.ref="LTS-"+(101+i);});
 
   /* employee relations */
-  var ER_TYPE=[["Disciplinary",38],["Long-term sickness",29],["Grievance",26],["Capability",21],["Flexible working",14],["Other",10]];
-  var ER_BANDS=[["0-14 days",0.355,1,14],["15-30 days",0.285,15,30],["31-60 days",0.19,31,60],["61-90 days",0.10,61,90],["90+ days",0.07,91,128]];
-  var ER_FLOW=[["Apr",28,24],["May",26,27],["Jun",24,26],["Jul",25,28],["Aug",22,27],["Sep",23,28]];
-  var ER=[];
-  (function(){var per=sample(138,wEr),bandN=alloc(138,ER_BANDS.map(function(b){return b[1];})),bag=[];
-    bandN.forEach(function(n,b){for(var i=0;i<n;i++)bag.push(b);});
+  var ER_TYPE=[["Disciplinary",38],["Long-term sickness",0],["Grievance",26],["Capability",21],["Flexible working",14],["Other",10]];
+  var ER_BANDS=[["0-14 days",34,1,14],["15-30 days",32,15,30],["31-60 days",48,31,60],["61-90 days",14,61,90],["90+ days",10,91,128]];
+  var ER_FLOW=[["Apr",78,72],["May",76,77],["Jun",73,76],["Jul",75,79],["Aug",72,77],["Sep",74,79]];
+  var ER_TOTAL=138,ER=[];
+  (function(){var quota=ER_BANDS.map(function(b){return b[1];});
+    /* long-term sickness ER cases are the long-term absence cases that have reached a formal stage, so the two pages always agree */
+    LTS.filter(function(x){return x.weeks>=16;}).forEach(function(x){var maxAge=Math.min(128,(x.weeks-12)*7);
+      var ok=ER_BANDS.map(function(b,i){return (b[2]<=maxAge&&quota[i]>0)?quota[i]:0;}),bi=pick([0,1,2,3,4],ok),b=ER_BANDS[bi];quota[bi]--;
+      var hi=Math.min(b[3],maxAge);
+      ER.push({ci:x.ci,site:x.site,role:x.role,band:b[0],age:b[2]+Math.floor(rnd()*(hi-b[2]+1)),type:"Long-term sickness",lts:x.ref});});
+    var bag=[];quota.forEach(function(n,b){for(var i=0;i<n;i++)bag.push(b);});
     for(var i=bag.length-1;i>0;i--){var j=Math.floor(rnd()*(i+1)),t=bag[i];bag[i]=bag[j];bag[j]=t;}
-    var k=0;per.forEach(function(n,ci){var r=RMAP[CELLS[ci].r],sw=siteW(r);
+    var types=ER_TYPE.filter(function(x){return x[1]>0;}),k=0;
+    sample(bag.length,wEr).forEach(function(n,ci){var r=RMAP[CELLS[ci].r],sw=siteW(r);
       for(var i=0;i<n;i++){var b=ER_BANDS[bag[k++]];
         ER.push({ci:ci,site:pick(r.sites,sw),role:CELLS[ci].role,band:b[0],age:b[2]+Math.floor(rnd()*(b[3]-b[2]+1)),
-          type:pick(ER_TYPE.map(function(x){return x[0];}),ER_TYPE.map(function(x){return x[1];}))});}});
+          type:pick(types.map(function(x){return x[0];}),types.map(function(x){return x[1];}))});}});
     ER.sort(function(a,b){return b.age-a.age;});ER.forEach(function(x,i){x.ref="ER-"+(2301+i);});})();
-  var cOpened=ER_FLOW.map(function(m,k){return alloc(m[1],wEr.map(function(w,i){return w*hf("o"+k+"_"+i,0.6,1.4);}));});
+  /* cases opened each month always include the cases of that age that are still open */
+  function ageMonth(a){return a<=30?5:(a<=60?4:(a<=90?3:(a<=120?2:1)));}
+  var cOpened=ER_FLOW.map(function(m,k){var base=CELLS.map(function(){return 0;});ER.forEach(function(x){if(ageMonth(x.age)===k)base[x.ci]++;});
+    var used=base.reduce(function(a,b){return a+b;},0),extra=alloc(Math.max(0,m[1]-used),wEr.map(function(w,i){return w*hf("o"+k+"_"+i,0.6,1.4);}));
+    return base.map(function(v,i){return v+extra[i];});});
   var cClosed=ER_FLOW.map(function(m,k){return alloc(m[2],wEr.map(function(w,i){return w*hf("c"+k+"_"+i,0.6,1.4);}));});
   var cResolved=sample(16,wEr);
 
@@ -262,26 +278,30 @@ var M=(function(){
   var VOLUNTARY={"Career progression":1,"Better pay":1,"Relocation":1,"Work-life balance":1,"Other":1};
   var LEAVERS=[];
   alloc(Math.round(TOTAL*0.151),wAtt).forEach(function(n,ci){var r=RMAP[CELLS[ci].r],sw=siteW(r);
-    for(var i=0;i<n;i++){var fy=rnd()<0.27,reason=pick(HC_REASON.map(function(x){return x[0];}),HC_REASON.map(function(x){return x[1];}));
+    for(var i=0;i<n;i++){var fy=rnd()<0.33,reason=pick(HC_REASON.map(function(x){return x[0];}),HC_REASON.map(function(x){return x[1];}));
       if(fy&&reason==="Retirement")reason="Better pay";
       LEAVERS.push({ci:ci,site:pick(r.sites,sw),role:CELLS[ci].role,reason:reason,q:pick([0,1,2,3],[23,25,27,25]),fy:fy});}});
 
   /* training */
   var TR_TREND=[83,84,85,86,87,87,88,88,89,89,90,90];
   var COURSES=[
-    {name:"Site Safety Induction",off:8,w:24,corp:false},
-    {name:"Fire Safety",off:6,w:32,corp:true},
-    {name:"Manual Handling",off:4,w:56,corp:true},
-    {name:"GDPR / Data",off:2,w:78,corp:true},
-    {name:"First Aid",off:-1,w:104,corp:true},
-    {name:"Working at Height",off:-4,w:168,corp:false},
-    {name:"HV / LV Awareness",off:-7,w:150,corp:false}];
+    {name:"Site Safety Induction",off:6,corp:false},
+    {name:"Fire Safety",off:5,corp:true},
+    {name:"Manual Handling",off:3,corp:true},
+    {name:"GDPR / Data",off:1,corp:true},
+    {name:"First Aid",off:-2,corp:true},
+    {name:"Working at Height",off:-5,corp:false},
+    {name:"HV / LV Awareness",off:-7,corp:false}];
+  function needs(ci,c){return c.corp||DMAP[CELLS[ci].d].group!=="Corporate";}
+  var NCOURSE=CELLS.map(function(c,ci){return COURSES.filter(function(x){return needs(ci,x);}).length;});
+  /* one overdue record per colleague per course at most; compliance is worked out from these records */
   var OVERDUE=[];
-  alloc(612,wTr).forEach(function(n,ci){var c=CELLS[ci],corp=DMAP[c.d].group==="Corporate";
-    var cs=COURSES.filter(function(x){return !corp||x.corp;});
-    for(var i=0;i<n;i++){var p=c.people[Math.floor(rnd()*c.people.length)];
-      OVERDUE.push({ci:ci,site:p.site,role:c.role,name:p.name,course:pick(cs,cs.map(function(x){return x.w;})).name,days:Math.min(210,1+Math.floor(-Math.log(1-rnd())*42))});}});
-  var cExpiring=alloc(840,CELLS.map(function(c,i){return c.hc*hf("e"+i,0.6,1.4);}));
+  CELLS.forEach(function(c,ci){COURSES.forEach(function(co){if(!needs(ci,co))return;
+    var p=1-Math.max(60,Math.min(99.5,LEVEL[ci]+co.off))/100,ex=c.hc*p,n=Math.floor(ex)+(rnd()<ex-Math.floor(ex)?1:0);
+    var pool=c.people.filter(function(x){return x.tenure>0.2;}),w=pool.map(function(x){return x.late;});
+    for(var i=0;i<n&&pool.length;i++){var who=pick(pool,w),j=pool.indexOf(who);pool.splice(j,1);w.splice(j,1);who.od++;
+      OVERDUE.push({ci:ci,site:who.site,role:c.role,name:who.name,course:co.name,days:Math.max(1,Math.min(1+Math.floor(-Math.log(1-rnd())*42),Math.floor(who.tenure*365)-45))});}});});
+  var cExpiring=alloc(840,CELLS.map(function(c,i){return c.hc*NCOURSE[i]*hf("e"+i,0.6,1.4);}));
 
   /* ---------- selection helpers ---------- */
   function inSel(c,s){return (s.region==="all"||c.r===s.region)&&(s.dept==="all"||c.d===s.dept)&&(s.role==="all"||c.role===s.role);}
@@ -311,14 +331,27 @@ var M=(function(){
     var fyL=o.leavers.filter(function(x){return x.fy;}).length;
     o.fy=(o.starters.length+fyL)?fyL/(o.starters.length+fyL)*100:0;
     o.tenure=head?o.people.reduce(function(a,p){return a+p.tenure;},0)/head:0;
-    var tw=0,lw=0;CELLS.forEach(function(c,i){if(mk[i]){tw+=c.hc*TTH[i];lw+=c.hc*LEVEL[i];}});
-    o.tth=head?tw/head:0;o.comp=head?lw/head:0;
-    o.fully=Math.max(40,Math.min(100,74+(o.comp-90)*1.5));
+    var tw=0;CELLS.forEach(function(c,i){if(mk[i])tw+=c.hc*TTH[i];});
+    o.tth=head?tw/head:0;
     o.overdue=recs(OVERDUE,mk);o.expiring=sumC(cExpiring,mk);
+    o.req=0;CELLS.forEach(function(c,i){if(mk[i])o.req+=c.hc*NCOURSE[i];});
+    o.comp=o.req?(1-o.overdue.length/o.req)*100:0;
+    o.fully=head?o.people.filter(function(p){return p.od===0;}).length/head*100:0;
     return o;
   }
 
-  return {hf:hf,REGIONS:REGIONS,DEPTS:DEPTS,RMAP:RMAP,DMAP:DMAP,CELLS:CELLS,TOTAL:TOTAL,PEOPLE:PEOPLE,QTR:QTR,MONS:MONS,
+  /* per-location figures for a selection: regions when all regions are selected, otherwise sites. Site absence rates are scaled so they average back to the selection's rate */
+  function locStats(s,m){
+    if(s.region==="all")return REGIONS.map(function(r){var x=metrics(sub(s,"region",r.id));return {name:r.name,hc:x.head,abs:x.absRate,comp:x.comp,req:x.req,od:x.overdue.length};});
+    var r=RMAP[s.region],st=r.sites.map(function(n){return {name:n,hc:0,req:0,od:0,j:hf(n,0.86,1.14)};}),ix={};st.forEach(function(x){ix[x.name]=x;});
+    m.people.forEach(function(p){var x=ix[p.site];x.hc++;x.req+=NCOURSE[p.ci];});m.overdue.forEach(function(o){ix[o.site].od++;});
+    var w=st.reduce(function(a,x){return a+x.hc*x.j;},0),norm=m.head?w/m.head:1;
+    st.forEach(function(x){x.abs=m.absRate*x.j/norm;x.comp=x.req?(1-x.od/x.req)*100:0;});return st;}
+  function courseStats(m){return COURSES.map(function(c){var req=0;CELLS.forEach(function(cl,i){if(m.mask[i]&&needs(i,c))req+=cl.hc;});
+    var od=m.overdue.filter(function(x){return x.course===c.name;}).length;return {name:c.name,req:req,od:od,comp:req?(1-od/req)*100:null};});}
+  function headOf(mk){return sumC(HCARR,mk);}
+
+  return {hf:hf,locStats:locStats,courseStats:courseStats,headOf:headOf,WORKDAYS:WORKDAYS,ER_FLOW:ER_FLOW,NCOURSE:NCOURSE,REGIONS:REGIONS,DEPTS:DEPTS,RMAP:RMAP,DMAP:DMAP,CELLS:CELLS,TOTAL:TOTAL,PEOPLE:PEOPLE,QTR:QTR,MONS:MONS,
     ABS_TREND:ABS_TREND,ABS_REASON:ABS_REASON,ER_TYPE:ER_TYPE,ER_BANDS:ER_BANDS,HC_TREND:HC_TREND,HC_REASON:HC_REASON,
     TR_TREND:TR_TREND,COURSES:COURSES,cShort:cShort,cLong:cLong,cOpened:cOpened,cClosed:cClosed,
     metrics:metrics,mask:mask,sumC:sumC,locOf:locOf,locs:locs,sub:sub,startQ:startQ,startMon:startMon,alloc:alloc};
@@ -356,16 +389,16 @@ var M=(function(){
   function yrs(t){return t<1?"under 1 yr":Math.floor(t)+" yrs";}
   function topServing(list){return list.slice().sort(function(a,b){return b.tenure-a.tenure;}).slice(0,3).map(function(p){return p.name+", "+p.role+", "+yrs(p.tenure);});}
   function topStarters(list){return list.slice().sort(function(a,b){return a.tenure-b.tenure;}).slice(0,3).map(function(p){return p.name+", "+p.role+", started "+M.startMon(p);});}
-  function topOverdue(list){return list.slice().sort(function(a,b){return b.days-a.days;}).slice(0,3).map(function(x){return x.name+", "+x.role+", "+x.days+" days overdue";});}
-  function topLTS(list,by){return list.slice().sort(function(a,b){return b.weeks-a.weeks;}).slice(0,3).map(function(x){return x.ref+", "+(by==="site"?x.site:x.role)+", "+x.weeks+" wks";});}
-  function topER(list,by){return list.slice().sort(function(a,b){return b.age-a.age;}).slice(0,3).map(function(x){return x.ref+", "+(by==="dept"?M.DMAP[M.CELLS[x.ci].d].name:x.type)+", "+x.age+" days";});}
+  function topOverdue(list){var seen={};return list.slice().sort(function(a,b){return b.days-a.days;}).filter(function(x){if(seen[x.name])return false;seen[x.name]=1;return true;}).slice(0,3).map(function(x){return x.name+", "+x.role+", "+x.days+" days overdue";});}
+  function topLTS(list){return list.slice().sort(function(a,b){return b.weeks-a.weeks;}).slice(0,3).map(function(x){return x.ref+", "+x.stage+", "+x.weeks+" wks";});}
+  function topER(list,by){return list.slice().sort(function(a,b){return b.age-a.age;}).slice(0,3).map(function(x){return x.ref+", "+(by==="dept"?"":x.type+", ")+x.age+" days";});}
   function count(list,keyFn){var o={};list.forEach(function(x){var k=keyFn(x);o[k]=(o[k]||0)+1;});return o;}
   function top3(pairs,fmt){return pairs.filter(function(p){return p[1]>0;}).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(p){return p[0]+", "+fmt(p[1]);});}
   /* next level down from the current selection: departments, then roles */
   function dim(s){if(s.dept==="all")return {k:"dept",label:"departments",items:M.DEPTS.map(function(d){return [d.name,d.id];})};
     if(s.role==="all")return {k:"role",label:"roles",items:M.DMAP[s.dept].roles.map(function(r){return [r[0],r[0]];})};return null;}
   function dimTop(s,valFn,fmt,low){var d=dim(s);if(!d)return [];
-    var pairs=d.items.map(function(it){var sub=M.sub(s,d.k,it[1]);return [it[0],valFn(sub,M.mask(sub))];}).filter(function(p){return p[1]!=null;});
+    var pairs=d.items.map(function(it){var sub=M.sub(s,d.k,it[1]),mk=M.mask(sub);return [it[0],M.headOf(mk)>=10?valFn(sub,mk):null];}).filter(function(p){return p[1]!=null;});
     pairs.sort(function(a,b){return low?a[1]-b[1]:b[1]-a[1];});
     return pairs.slice(0,3).map(function(p){return p[0]+", "+fmt(p[1]);});}
   function dimLabel(s,prefix){var d=dim(s);return d?prefix+" "+d.label:"";}
@@ -412,11 +445,11 @@ var M=(function(){
       s+='<text x="'+(L+bw+6)+'" y="'+(y+rowH/2+4)+'" class="vlab" '+(over?'style="fill:var(--risk)"':'')+'>'+fv(it[1])+unit+'</text>';});
     s+='</svg>';el.innerHTML=s;wire(el,tips);
   }
+  function niceMax(mx){var st=[1,2,3,5,10,15,20,25,30,50,75,100,150,200,250,300,500,750,1000,1500,2000,2500,3000,5000,7500,10000].filter(function(v){return v*4>=mx;})[0]||Math.ceil(mx/4);return st*4;}
   /* rows: [label, a, b, tipA, tipB] */
   function stacked(id,rows,o){
     o=o||{};var el=$("#"+id),W=cw(el),H=240,L=44,R=10,T=14,B=26,pw=W-L-R,ph=H-T-B,tips=[];
-    var tot=rows.map(function(r){return r[1]+r[2];}),mx=Math.max.apply(null,tot.concat([1])),step=Math.pow(10,Math.floor(Math.log(mx)/Math.LN10)),max=Math.ceil(mx/step)*step;
-    if(max/step<=2){step=step/2;max=Math.ceil(mx/step)*step;}
+    var tot=rows.map(function(r){return r[1]+r[2];}),mx=Math.max.apply(null,tot.concat([1])),max=niceMax(mx);
     var n=rows.length,bw=Math.min(52,pw/n*0.6),gap=(pw-bw*n)/(n+1),Y=function(v){return T+ph*(1-v/max);};
     var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(o.aria||"Stacked columns")+'">';
     for(var t=0;t<=4;t++){var v=max*t/4,y=Y(v);s+='<line class="gl" x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'"/><text class="ax" x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end">'+nf(Math.round(v))+'</text>';}
@@ -430,7 +463,7 @@ var M=(function(){
   }
   function groupedCols(id,rows,o){
     o=o||{};var el=$("#"+id),W=cw(el),H=240,L=34,R=10,T=16,B=26,pw=W-L-R,ph=H-T-B,tips=[];
-    var mx=Math.max.apply(null,rows.map(function(r){return Math.max(r[1],r[2]);}).concat([1])),st=[4,8,20,40,80,200,400].filter(function(v){return mx<=v*4;})[0]||Math.ceil(mx/4),max=Math.ceil(mx/st)*st;if(max%4)max=Math.ceil(max/4)*4;
+    var mx=Math.max.apply(null,rows.map(function(r){return Math.max(r[1],r[2]);}).concat([1])),max=niceMax(mx);
     var n=rows.length,grp=pw/n,bw=Math.min(22,grp*0.32),Y=function(v){return T+ph*(1-v/max);};
     var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(o.aria||"Grouped columns")+'">';
     for(var t=0;t<=4;t++){var v=max*t/4,y=Y(v);s+='<line class="gl" x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'"/><text class="ax" x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end">'+Math.round(v)+'</text>';}
@@ -446,12 +479,13 @@ var M=(function(){
   /* items: {id,label,short,group,value,tip} */
   function deptBars(id,items,o){
     o=o||{};var el=$("#"+id),W=cw(el,300),small=W<560,rowH=26,padT=6,L=small?98:200,R=58,pw=W-L-R,H=padT+items.length*rowH+6,tips=[];
-    var max=o.max||Math.max.apply(null,items.map(function(x){return x.value;}).concat([1])),unit=o.unit||"";
+    var max=o.max||Math.max.apply(null,items.map(function(x){return x.hidden?0:x.value;}).concat([1])),unit=o.unit||"";
     var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(o.aria||"By department bar chart")+'">';
     if(o.target!=null){var tx=L+pw*o.target/max;s+='<line x1="'+tx+'" y1="'+padT+'" x2="'+tx+'" y2="'+(H-6)+'" stroke="var(--amber)" stroke-width="2" stroke-dasharray="5 4"/>';}
     items.forEach(function(it,i){var y=padT+i*rowH,bw=Math.max(pw*it.value/max,2);var fill=it.group==="Corporate"?"var(--cyan)":"var(--brand)";
       var fade=(o.highlight&&o.highlight!=="all"&&o.highlight!==it.id)?' opacity="0.35"':'';tips.push(it.tip);
       s+='<text class="ax" x="'+(L-8)+'" y="'+(y+rowH/2+4)+'" text-anchor="end">'+esc(small?it.short:it.label)+'</text>';
+      if(it.hidden){s+='<text class="ax" x="'+L+'" y="'+(y+rowH/2+4)+'">Hidden: fewer than 10 colleagues</text>';return;}
       s+='<rect class="bar" x="'+L+'" y="'+(y+4)+'" width="'+bw+'" height="'+(rowH-10)+'" rx="4" fill="'+fill+'"'+fade+' data-t="'+i+'" data-k="'+it.id+'"/>';
       s+='<text x="'+(L+bw+6)+'" y="'+(y+rowH/2+4)+'" class="vlab">'+(o.dp?it.value.toFixed(o.dp):nf(it.value))+unit+'</text>';});
     s+='</svg>';el.innerHTML=s;el._onPick=o.onPick;wire(el,tips);
@@ -491,13 +525,17 @@ var M=(function(){
     return regName();}
   function locWord(){return state.region==="all"?"region":"site";}
   function byLoc(list){var s=sel(),o={};M.locs(s).forEach(function(n){o[n]=[];});list.forEach(function(x){var k=M.locOf(x,s);if(o[k])o[k].push(x);});return o;}
+  /* locations in the current selection; any with fewer than 10 colleagues are left out of absence, ER and training charts */
+  function locInfo(m){var st=M.locStats(sel(),m),small={},n=0,sites={};st.forEach(function(x){if(x.hc<10){small[x.name]=1;n++;}});
+    m.people.forEach(function(p){sites[p.site]=(sites[p.site]||0)+1;});return {st:st,small:small,n:n,sites:sites};}
+  function smallNote(id,n){if(n)$("#"+id).insertAdjacentHTML("afterend",'<p class="h-sub" style="margin:8px 0 0">'+n+' '+locWord()+(n===1?'':'s')+' with fewer than 10 colleagues in this selection '+(n===1?'is':'are')+' not shown.</p>');}
   function ukSel(){return {region:"all",dept:state.dept,role:state.role};}
 
   /* ---------- commentary ---------- */
   function cmp(v,uk,unit,dp,lowerBetter){
     if(state.region==="all")return "";
     var d=dp?r1(v-uk):Math.round(v-uk);if(d===0)return " That is level with the UK & Ireland figure.";
-    return " That is "+Math.abs(d)+(unit==="%"?(Math.abs(d)===1?" point":" points"):" "+unit)+" "+(d>0?"above":"below")+" the UK & Ireland figure of "+(dp?r1(uk):Math.round(uk))+(unit==="%"?"%":" "+unit)+".";}
+    return " That is "+Math.abs(d)+(unit==="%"?(Math.abs(d)===1?" point":" points"):(Math.abs(d)===1?" day":" days"))+" "+(d>0?"above":"below")+" the UK & Ireland figure of "+(dp?r1(uk):Math.round(uk))+(unit==="%"?"%":" "+unit)+".";}
   function topKey(list,keyFn){var c=count(list,keyFn),best=null;Object.keys(c).forEach(function(k){if(!best||c[k]>c[best])best=k;});return best?[best,c[best]]:null;}
   function leaverGroup(m){if(state.role!=="all")return null;
     return state.dept==="all"?topKey(m.leavers,function(x){return M.DMAP[M.CELLS[x.ci].d].name;}):topKey(m.leavers,roleKey);}
@@ -557,20 +595,21 @@ var M=(function(){
     return "<ul>"+f.map(function(x){return "<li>"+pill(x.st)+" "+esc(x.st==="good"?x.good:x.text)+(x.st==="good"?"":" <strong>Suggested action:</strong> "+esc(x.act))+"</li>";}).join("")+"</ul>";}
 
   /* ---------- suppression of small groups ---------- */
-  function suppressed(m){return '<div class="card insight"><h2>Figures hidden for this selection</h2><p>'+esc(scopeName())+' covers '+pl(m.head,"colleague","colleagues")+'. Figures for groups of fewer than 10 are not shown, so that no individual can be identified from absence, case or leaver information.</p><p>Widen the selection by choosing all roles, all departments or all regions.</p></div>';}
+  function suppressed(m){if(m.head===0)return '<div class="card insight"><h2>No colleagues in this selection</h2><p>There is no '+esc(state.role!=="all"?state.role:M.DMAP[state.dept].name)+' post '+(state.region==="all"?"in the sample":"based in "+esc(M.RMAP[state.region].name))+'. Some senior posts cover the whole of UK &amp; Ireland from one region.</p><p>Choose all regions, or a different role.</p></div>';
+    return '<div class="card insight"><h2>Figures hidden for this selection</h2><p>'+esc(scopeName())+' covers '+pl(m.head,"colleague","colleagues")+'. Figures for groups of fewer than 10 are not shown, so that no individual can be identified from absence, case or leaver information.</p><p>Widen the selection by choosing all roles, all departments or all regions.</p></div>';}
 
   /* ---------- by-department chart (always shows every department in the region) ---------- */
   function renderDeptBreak(page){
     var base={region:state.region,dept:"all",role:"all"},unit="",target=null,max=null;
     var items=M.DEPTS.map(function(d){var s=M.sub(base,"dept",d.id),m=M.metrics(s),v,tp;
-      if(page==="absence"){v=r1(m.absRate);tp=tipHTML(d.name,v+"% absence (target 3.0%)","Longest open cases",topLTS(m.lts,"role"),m.lts.length?RESTRICT:"No long-term cases open.");}
+      if(page==="absence"){v=r1(m.absRate);tp=tipHTML(d.name,v+"% absence (target 3.0%)","Longest open cases",topLTS(m.lts),m.lts.length?RESTRICT:"No long-term cases open.");}
       else if(page==="er"){v=m.erOpen;tp=tipHTML(d.name,pl(v,"open case","open cases"),"Oldest open cases",topER(m.er,"type"),m.er.length?RESTRICT:"");}
       else if(page==="hc"){v=m.head;tp=tipHTML(d.name,nf(v)+" people","Longest serving ("+NAMES+")",topServing(m.people));}
       else {v=Math.round(m.comp);tp=tipHTML(d.name,v+"% compliant (target 95%)","Longest overdue ("+NAMES+")",topOverdue(m.overdue));}
-      return {id:d.id,label:d.name,short:d.short,group:d.group,value:v,tip:tp};});
+      return {id:d.id,label:d.name,short:d.short,group:d.group,value:v,tip:tp,hidden:page!=="hc"&&m.head<10};});
     var dp=0;if(page==="absence"){unit="%";target=3.0;dp=1;}
     if(page==="train"){unit="%";target=95;max=100;}
-    items.sort(function(a,b){return b.value-a.value;});
+    items.sort(function(a,b){return (a.hidden?1:0)-(b.hidden?1:0)||b.value-a.value;});
     deptBars("c_byd",items,{unit:unit,target:target,max:max,dp:dp,highlight:state.dept,onPick:function(id){state.dept=(state.dept===id)?"all":id;state.role="all";syncSlicers();draw();}});
   }
 
@@ -599,9 +638,11 @@ var M=(function(){
       {l:"Open long-term",v:nf(m.lts.length),d:m.lt26?m.lt26+" at 26 weeks or more":"none at 26 weeks",dc:m.lt26?"c-risk":"c-good",s:"long-term sickness cases"},
       {l:"Trigger breaches",v:nf(m.trig),d:"review due",dc:"c-flat",s:"this month"},
       {l:"Days lost / FTE",v:r1(m.daysPer).toFixed(1),d:"▼ falling",dc:"c-good",s:"rolling 12 months"}];
-    var bl=byLoc(m.lts),locRows=Object.keys(bl).map(function(k){return [k,bl[k]];}).filter(function(x){return x[1].length;}).sort(function(x,y){return y[1].length-x[1].length;}).slice(0,6)
+    var li=locInfo(m),bl=byLoc(m.lts),hidN=0;Object.keys(bl).forEach(function(k){if(li.small[k])hidN+=bl[k].length;});
+    var locRows=Object.keys(bl).map(function(k){return [k,bl[k]];}).filter(function(x){return x[1].length&&!li.small[x[0]];}).sort(function(x,y){return y[1].length-x[1].length;})
       .map(function(x){var top=x[1].slice().sort(function(p,q){return q.weeks-p.weeks;})[0];return '<tr><td>'+esc(x[0])+'</td><td class="n">'+x[1].length+'</td><td class="n">'+top.weeks+'</td><td>'+esc(top.stage)+'</td><td>'+pill(top.code,top.label)+'</td></tr>';}).join("")
-      ||'<tr><td colspan="5">No long-term cases open for this selection.</td></tr>';
+      +(hidN?'<tr><td>Sites with fewer than 10 colleagues</td><td class="n">'+hidN+'</td><td colspan="3">Detail hidden</td></tr>':'');
+    if(!locRows)locRows='<tr><td colspan="5">No long-term cases open for this selection.</td></tr>';
     $("#page").innerHTML=kpiHTML(kp)+insight("What this shows: "+scopeName(),pageText(["abs"],m,uk))
       +deptCard("Absence rate by department","Latest, with the 3.0% target.")
       +'<div class="grid">'+card("Monthly absence rate vs target","% of working time lost, rolling 12 months.","c_trend")+card("Absence rate by "+locWord(),"Latest. Dashed line is the 3.0% target.","c_site")+'</div>'
@@ -610,12 +651,11 @@ var M=(function(){
     renderDeptBreak("absence");
     var trend=M.ABS_TREND.map(function(v){return r1(v*f);});trend[trend.length-1]=a;
     lineChart("c_trend",trend,{target:3.0,yMax:Math.max(5,Math.ceil(Math.max.apply(null,trend))),aria:"Monthly absence rate",
-      tips:trend.map(function(v,i){var k=v/Math.max(a,0.01);return tipHTML(MON[i],"Absence "+v+"% (target 3.0%)",dimLabel(s,"Highest"),dimTop(s,function(sub){var x=M.metrics(sub);return x.head?r1(x.absRate*k):null;},function(x){return x+"%";}));})});
-    var sites=M.locs(s).map(function(n){var rate;
-      if(s.region==="all"){var rid=M.REGIONS.filter(function(r){return r.name===n;})[0].id;rate=r1(M.metrics(M.sub(s,"region",rid)).absRate);}
-      else rate=r1(m.absRate*M.hf(n,0.86,1.14));
-      return [n,rate,tipHTML(n,rate+"% absence (target 3.0%)","Longest open cases",topLTS(bl[n],"role"),bl[n].length?RESTRICT:"No long-term cases open.")];}).sort(function(x,y){return y[1]-x[1];});
-    hbars("c_site",sites,{max:Math.max(5,Math.ceil(Math.max.apply(null,sites.map(function(x){return x[1];})))),target:3.0,unit:"%",dp:1,labelW:124,lowerBetter:true,aria:"Absence rate by location"});
+      tips:trend.map(function(v,i){var k=v/Math.max(a,0.01);return tipHTML(MON[i],"Absence "+v+"% (target 3.0%)",dimLabel(s,"Highest"),dimTop(s,function(sub){var x=M.metrics(sub);return x.head?r1(x.absRate*k):null;},function(x){return x.toFixed(1)+"%";}));})});
+    var sites=li.st.filter(function(x){return x.hc>=10;}).map(function(x){var n=x.name,rate=r1(x.abs);
+      return [n,rate,tipHTML(n,rate.toFixed(1)+"% absence (target 3.0%)","Longest open cases",topLTS(bl[n]),bl[n].length?RESTRICT:"No long-term cases open.")];}).sort(function(x,y){return y[1]-x[1];});
+    hbars("c_site",sites,{max:Math.max(5,Math.ceil(Math.max.apply(null,sites.map(function(x){return x[1];}).concat([0])))),target:3.0,unit:"%",dp:1,labelW:124,lowerBetter:true,aria:"Absence rate by location"});
+    smallNote("c_site",li.n);
     hbars("c_reason",M.ABS_REASON.map(function(r){var days=Math.round(m.days*r[1]/100);
       return [r[0],r[1],tipHTML(r[0],r[1]+"% of days lost, about "+nf(days)+" days",dimLabel(s,"Top three"),dimTop(s,function(sub){var x=M.metrics(sub);return Math.round(x.days*r[1]/100*M.hf(r[0]+sub.dept+sub.role,0.75,1.25));},function(x){return nf(x)+" days";}),"Shown by group only. Reasons are never shown for an individual.")];}),{unit:"%",labelW:112,aria:"Days lost by reason"});
     stacked("c_split",m.split.map(function(q,k){return [q[0],q[1],q[2],
@@ -628,9 +668,10 @@ var M=(function(){
       {l:"Avg case age",v:Math.round(m.erAvg)+" days",d:"time open",dc:"c-flat",s:"open cases"},
       {l:"Aged > 60 days",v:nf(m.erAged),st:rag("er",m),s:"61-90 and 90+ bands"},
       {l:"Tribunal-risk",v:nf(m.erTrib),d:m.erTrib?"over 90 days":"none over 90 days",dc:m.erTrib?"c-risk":"c-good",s:"oldest, highest risk"},
-      {l:"Resolved, no claim",v:nf(m.resolved),d:"this year",dc:"c-good",s:"closed without a claim"}];
+      {l:"Risk cases resolved",v:nf(m.resolved),d:"this year",dc:"c-good",s:"90+ day cases closed, no claim"}];
     var aged=m.er.filter(function(x){return x.age>60;}).sort(function(x,y){return y.age-x.age;}).slice(0,8);
-    var rows=aged.map(function(x){return '<tr><td>'+x.ref+'</td><td>'+esc(x.site)+'</td><td>'+esc(x.type)+'</td><td class="n">'+x.age+'</td><td>'+pill(x.age>90?"risk":"warn",x.age>90?"At risk":"Watch")+'</td></tr>';}).join("")||'<tr><td colspan="5">No cases over 60 days for this selection.</td></tr>';
+    var li=locInfo(m);
+    var rows=aged.map(function(x){return '<tr><td>'+x.ref+'</td><td>'+((li.sites[x.site]||0)<10?"Hidden":esc(x.site))+'</td><td>'+esc(x.type)+'</td><td class="n">'+x.age+'</td><td>'+pill(x.age>90?"risk":"warn",x.age>90?"At risk":"Watch")+'</td></tr>';}).join("")||'<tr><td colspan="5">No cases over 60 days for this selection.</td></tr>';
     $("#page").innerHTML=kpiHTML(kp)+insight("What this shows: "+scopeName(),pageText(["er"],m,uk))
       +deptCard("Open cases by department","Current caseload split across departments.")
       +'<div class="grid">'+card("Cases opened vs closed","Last 6 months.","c_flow",leg("Opened","Closed"))+card("Open cases by type","Current caseload.","c_type")+'</div>'
@@ -644,7 +685,8 @@ var M=(function(){
     hbars("c_type",M.ER_TYPE.map(function(t){var l=m.er.filter(function(x){return x.type===t[0];});return [t[0],ct[t[0]]||0,tipHTML(t[0],pl(l.length,"open case","open cases"),"Oldest open cases",topER(l,"dept"),l.length?RESTRICT:"")];}).sort(function(x,y){return y[1]-x[1];}),{labelW:118,aria:"Open ER cases by type"});
     hbars("c_age",M.ER_BANDS.map(function(b){var l=m.er.filter(function(x){return x.band===b[0];});return [b[0],l.length,tipHTML(b[0],pl(l.length,"open case","open cases"),"Oldest open cases",topER(l,"type"),l.length?RESTRICT:"")];}),{labelW:88,aria:"Open ER cases by age band"});
     var bl=byLoc(m.er);
-    hbars("c_ersite",M.locs(s).map(function(n){return [n,bl[n].length,tipHTML(n,pl(bl[n].length,"open case","open cases"),"Oldest open cases",topER(bl[n],"type"),bl[n].length?RESTRICT:"")];}).sort(function(x,y){return y[1]-x[1];}),{labelW:124,aria:"Open ER cases by location"});
+    hbars("c_ersite",M.locs(s).filter(function(n){return !li.small[n];}).map(function(n){return [n,bl[n].length,tipHTML(n,pl(bl[n].length,"open case","open cases"),"Oldest open cases",topER(bl[n],"type"),bl[n].length?RESTRICT:"")];}).sort(function(x,y){return y[1]-x[1];}),{labelW:124,aria:"Open ER cases by location"});
+    smallNote("c_ersite",li.n);
   }
   function renderHC(m,uk){
     var s=sel(),at=r1(m.attr),f=m.attr/uk0.attr;
@@ -665,11 +707,11 @@ var M=(function(){
     renderDeptBreak("hc");
     var trend=M.HC_TREND.map(function(v){return r1(v*f);});trend[trend.length-1]=at;
     lineChart("c_attr",trend,{target:12,yMax:Math.max(20,Math.ceil(Math.max.apply(null,trend)/5)*5),ticks:5,aria:"Attrition rate by month",
-      tips:trend.map(function(v,i){var k=v/Math.max(at,0.01);return tipHTML(MON[i],"Attrition "+v+"% (target 12%)",dimLabel(s,"Highest"),dimTop(s,function(sub){var x=M.metrics(sub);return x.head>=10?r1(x.attr*k):null;},function(x){return x+"%";}));})});
+      tips:trend.map(function(v,i){var k=v/Math.max(at,0.01);return tipHTML(MON[i],"Attrition "+v+"% (target 12%)",dimLabel(s,"Highest"),dimTop(s,function(sub){var x=M.metrics(sub);return x.head>=10?r1(x.attr*k):null;},function(x){return x.toFixed(1)+"%";}));})});
     hbars("c_hc",M.locs(s).map(function(n){return [n,pb[n].length,tipHTML(n,nf(pb[n].length)+" people","Longest serving ("+NAMES+")",topServing(pb[n]))];}).sort(function(x,y){return y[1]-x[1];}),{labelW:124,aria:"Headcount by location"});
-    var cr=count(m.leavers,function(x){return x.reason;}),nL=Math.max(1,m.leavers.length);
-    hbars("c_reason",M.HC_REASON.map(function(r){var l=m.leavers.filter(function(x){return x.reason===r[0];});
-      return [r[0],Math.round((cr[r[0]]||0)/nL*100),tipHTML(r[0],pl(l.length,"leaver","leavers"),"Top three roles",top3(Object.keys(count(l,roleKey)).map(function(k){return [k,count(l,roleKey)[k]];}),function(x){return pl(x,"leaver","leavers");}))];}).sort(function(x,y){return y[1]-x[1];}),{unit:"%",labelW:120,aria:"Reasons for leaving"});
+    var cr=count(m.leavers,function(x){return x.reason;}),pc=m.leavers.length?M.alloc(100,M.HC_REASON.map(function(r){return cr[r[0]]||0;})):M.HC_REASON.map(function(){return 0;});
+    hbars("c_reason",M.HC_REASON.map(function(r,i){var l=m.leavers.filter(function(x){return x.reason===r[0];});
+      return [r[0],pc[i],tipHTML(r[0],pl(l.length,"leaver","leavers"),"Top three roles",top3(Object.keys(count(l,roleKey)).map(function(k){return [k,count(l,roleKey)[k]];}),function(x){return pl(x,"leaver","leavers");}))];}).sort(function(x,y){return y[1]-x[1];}),{unit:"%",labelW:120,aria:"Reasons for leaving"});
     groupedCols("c_flow",M.QTR.map(function(q,k){var st=m.starters.filter(function(p){return M.startQ(p)===k;}),lv=m.leavers.filter(function(x){return x.q===k;});
       return [q,st.length,lv.length,tipHTML(q+", starters",pl(st.length,"starter","starters"),"Most recent starters ("+NAMES+")",topStarters(st)),
         tipHTML(q+", leavers",pl(lv.length,"leaver","leavers"),"Top three roles",top3(Object.keys(count(lv,roleKey)).map(function(kk){return [kk,count(lv,roleKey)[kk]];}),function(x){return pl(x,"leaver","leavers");}))];}),{aria:"Starters and leavers by quarter"});
@@ -677,29 +719,27 @@ var M=(function(){
   function renderTrain(m,uk){
     var s=sel(),cp=Math.round(m.comp),d=m.comp-90;
     var kp=[{l:"Overall compliance",v:cp+"%",st:rag("comp",m),s:"target 95%"},
-      {l:"Courses tracked",v:String(M.COURSES.length),d:"mandatory",dc:"c-flat",s:"safety and compliance"},
-      {l:"Fully compliant",v:Math.round(m.fully)+"%",d:"▲ improving",dc:"c-good",s:"of colleagues"},
-      {l:"Overdue",v:nf(m.overdue.length),d:"▼ reducing",dc:"c-good",s:"records"},
+      {l:"Courses tracked",v:String(M.courseStats(m).filter(function(c){return c.req>0;}).length),d:"mandatory",dc:"c-flat",s:nf(m.req)+" required records"},
+      {l:"Fully compliant",v:Math.round(m.fully)+"%",d:"nothing overdue",dc:"c-flat",s:"of colleagues"},
+      {l:"Overdue",v:nf(m.overdue.length),d:"▼ reducing",dc:"c-good",s:"of "+nf(m.req)+" required records"},
       {l:"Expiring 30 days",v:nf(m.expiring),d:"renew soon",dc:"c-flat",s:"records"}];
-    var cc=count(m.overdue,function(x){return x.course;}),expW=M.alloc(m.expiring,M.COURSES.map(function(c){return 60+c.w;}));
-    function clvl(c){return Math.max(50,Math.min(100,Math.round(m.comp+c.off)));}
-    var rows=M.COURSES.map(function(c,i){var v=clvl(c),code=v>=95?"good":(v>=90?"warn":"risk");return '<tr><td>'+esc(c.name)+'</td><td class="n">'+v+'%</td><td class="n">'+(cc[c.name]||0)+'</td><td class="n">'+expW[i]+'</td><td>'+pill(code)+'</td></tr>';}).join("");
+    var cs=M.courseStats(m).filter(function(c){return c.req>0;}),expW=M.alloc(m.expiring,cs.map(function(c){return c.req;})),li=locInfo(m);
+    var rows=cs.map(function(c,i){var v=Math.round(c.comp),code=v>=95?"good":(v>=90?"warn":"risk");return '<tr><td>'+esc(c.name)+'</td><td class="n">'+v+'%</td><td class="n">'+nf(c.od)+'</td><td class="n">'+expW[i]+'</td><td>'+pill(code)+'</td></tr>';}).join("");
     $("#page").innerHTML=kpiHTML(kp)+insight("What this shows: "+scopeName(),pageText(["comp"],m,uk))
       +deptCard("Compliance by department","Latest, with the 95% target.")
       +'<div class="grid">'+card("Compliance trend vs target","Rolling 12 months. Target 95%.","c_trend")+card("Compliance by "+locWord(),"Latest. Dashed line is the 95% target.","c_site")+'</div>'
       +'<div class="grid2">'+card("Compliance by course","Dashed line is the 95% target.","c_course")+card("Overdue records by course","Where the gap is.","c_over")
-      +tableCard("Course detail","Compliance, overdue and renewals.",'<th>Course</th><th class="n">Compliant</th><th class="n">Overdue</th><th class="n">Exp. 30d</th><th>Status</th>',rows)+'</div>';
+      +tableCard("Course detail","Compliance is the share of required records that are in date.",'<th>Course</th><th class="n">Compliant</th><th class="n">Overdue</th><th class="n">Exp. 30d</th><th>Status</th>',rows)+'</div>';
     renderDeptBreak("train");
     var trend=M.TR_TREND.map(function(v){return Math.max(50,Math.min(100,Math.round(v+d)));});trend[trend.length-1]=cp;
     lineChart("c_trend",trend,{target:95,yMax:100,ticks:5,aria:"Training compliance by month",
       tips:trend.map(function(v,i){return tipHTML(MON[i],"Compliance "+v+"% (target 95%)",dimLabel(s,"Lowest"),dimTop(s,function(sub){var x=M.metrics(sub);return x.head?Math.max(50,Math.min(100,Math.round(x.comp+(v-cp)))):null;},function(x){return x+"%";},true));})});
     var ob=byLoc(m.overdue);
-    hbars("c_site",M.locs(s).map(function(n){var v;
-      if(s.region==="all"){var rid=M.REGIONS.filter(function(r){return r.name===n;})[0].id;v=Math.round(M.metrics(M.sub(s,"region",rid)).comp);}
-      else v=Math.max(50,Math.min(100,Math.round(m.comp+M.hf(n,-2,2))));
+    hbars("c_site",li.st.filter(function(x){return x.hc>=10;}).map(function(x){var n=x.name,v=Math.round(x.comp);
       return [n,v,tipHTML(n,v+"% compliant (target 95%)","Longest overdue ("+NAMES+")",topOverdue(ob[n]))];}).sort(function(x,y){return y[1]-x[1];}),{max:100,target:95,unit:"%",labelW:124,lowerBetter:false,aria:"Training compliance by location"});
-    hbars("c_course",M.COURSES.map(function(c){var l=m.overdue.filter(function(x){return x.course===c.name;});return [c.name,clvl(c),tipHTML(c.name,clvl(c)+"% compliant (target 95%)","Longest overdue ("+NAMES+")",topOverdue(l))];}),{max:100,target:95,unit:"%",labelW:128,lowerBetter:false,aria:"Training compliance by course"});
-    hbars("c_over",M.COURSES.map(function(c){var l=m.overdue.filter(function(x){return x.course===c.name;});return [c.name,l.length,tipHTML(c.name,pl(l.length,"overdue record","overdue records"),"Longest overdue ("+NAMES+")",topOverdue(l))];}).sort(function(x,y){return y[1]-x[1];}),{labelW:128,aria:"Overdue training records by course"});
+    smallNote("c_site",li.n);
+    hbars("c_course",cs.map(function(c){var l=m.overdue.filter(function(x){return x.course===c.name;}),v=Math.round(c.comp);return [c.name,v,tipHTML(c.name,v+"% compliant (target 95%)","Longest overdue ("+NAMES+")",topOverdue(l))];}),{max:100,target:95,unit:"%",labelW:128,lowerBetter:false,aria:"Training compliance by course"});
+    hbars("c_over",cs.map(function(c){var l=m.overdue.filter(function(x){return x.course===c.name;});return [c.name,l.length,tipHTML(c.name,pl(l.length,"overdue record","overdue records"),"Longest overdue ("+NAMES+")",topOverdue(l))];}).sort(function(x,y){return y[1]-x[1];}),{labelW:128,aria:"Overdue training records by course"});
   }
   function renderReal(){
     $("#page").innerHTML=

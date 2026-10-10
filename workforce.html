@@ -176,7 +176,7 @@
     <h2 id="rolestitle">All roles</h2>
     <p class="h-sub" id="rolessub">Every role type, grouped by department.</p>
     <div style="overflow-x:auto"><table><thead><tr>
-      <th>Department</th><th>Role</th><th>Group</th><th class="n">Headcount</th><th style="width:120px">Share</th><th class="n">Avg tenure</th>
+      <th>Department</th><th>Role</th><th>Group</th><th class="n">Headcount</th><th style="width:170px" id="shareh">% of headcount</th><th class="n">Avg tenure</th>
     </tr></thead><tbody id="rolesbody"></tbody></table></div>
   </div>
 
@@ -199,48 +199,55 @@ var M=(function(){
     return out;}
   function sample(total,w){var out=w.map(function(){return 0;}),idx=w.map(function(x,i){return i;});for(var i=0;i<total;i++)out[pick(idx,w)]++;return out;}
 
-  var WORKDAYS=228,COST_PER_DAY=140,BASE_HC=850;
+  var WORKDAYS=228,COST_PER_DAY=140,BASE_HC=852;
   var REGIONS=[
-    {id:"sco",name:"Scotland",scale:1.25,absF:1.08,attF:1.05,compD:-3,tthF:1.08,sites:["Inverness","Aberdeen","Glasgow","Edinburgh","Dundee"]},
+    {id:"sco",name:"Scotland",scale:1.249,absF:1.08,attF:1.05,compD:-3,tthF:1.08,sites:["Inverness","Aberdeen","Glasgow","Edinburgh","Dundee"]},
     {id:"nor",name:"North of England",scale:0.90,absF:0.98,attF:1.00,compD:-1,tthF:1.00,sites:["Newcastle","Leeds","Manchester","Sheffield","Hull"]},
     {id:"mid",name:"Midlands & East",scale:1.10,absF:0.95,attF:0.97,compD:1,tthF:0.96,sites:["Birmingham","Leicester","Nottingham","Coventry","Derby","Peterborough"]},
     {id:"lon",name:"London & South East",scale:0.85,absF:0.97,attF:1.05,compD:2,tthF:1.06,sites:["London","Reading","Crawley","Maidstone","Chelmsford"]},
     {id:"wal",name:"Wales & West",scale:0.80,absF:1.00,attF:0.98,compD:0,tthF:0.98,sites:["Cardiff","Bristol","Swansea","Gloucester","Exeter"]},
     {id:"irl",name:"Ireland",scale:0.95,absF:1.02,attF:0.95,compD:1,tthF:0.95,sites:["Belfast","Dublin","Cork","Galway","Limerick"]}
   ];
+  /* roles: [name, weight] scales with the region; [name, n, "R"] is a fixed number per region; [name, 1, "U"] is one post for the whole of UK & Ireland */
+  var HOME="mid";
   var DEPTS=[
-    {id:"con",name:"Construction & Site",short:"Construction",group:"Delivery",w:0.28,abs:1.5,att:1.15,comp:-4,er:1.4,tth:0.95,roles:[["Construction Manager",2],["Site Manager",4],["Civils Site Engineer",6],["Overhead Linesperson",10],["Cable Jointer",7],["Substation Fitter",7]]},
-    {id:"pm",name:"Project Management",short:"Project Mgmt",group:"Delivery",w:0.15,abs:0.8,att:0.95,comp:1,er:0.8,tth:1.05,roles:[["Project Director",1],["Senior Project Manager",3],["Project Manager",6],["Project Engineer",7],["Graduate Project Manager",3]]},
-    {id:"eng",name:"Engineering & Design",short:"Engineering",group:"Delivery",w:0.13,abs:0.7,att:0.90,comp:1,er:0.7,tth:1.25,roles:[["Design Manager",1],["Senior Design Engineer",3],["Design Engineer",6],["Protection & Control Engineer",3],["CAD Technician",3]]},
-    {id:"com",name:"Commercial & Estimating",short:"Commercial",group:"Delivery",w:0.08,abs:0.8,att:1.00,comp:0,er:0.8,tth:1.10,roles:[["Commercial Manager",1],["Senior Quantity Surveyor",2],["Quantity Surveyor",4],["Estimator",3],["Bid Manager",1]]},
-    {id:"cmg",name:"Commissioning & Testing",short:"Commissioning",group:"Delivery",w:0.07,abs:1.3,att:1.05,comp:-2,er:1.1,tth:1.15,roles:[["Commissioning Manager",1],["Commissioning Engineer",4],["Test Technician",4]]},
-    {id:"shq",name:"SHEQ",short:"SHEQ",group:"Delivery",w:0.06,abs:1.1,att:0.90,comp:3,er:0.9,tth:1.00,roles:[["SHEQ Manager",1],["Health & Safety Advisor",4],["Environmental Advisor",2],["Quality Engineer",2]]},
-    {id:"fin",name:"Finance",short:"Finance",group:"Corporate",w:0.06,abs:0.75,att:0.85,comp:3,er:0.7,tth:0.90,roles:[["Finance Director",1],["Financial Controller",1],["Management Accountant",3],["Accounts Assistant",4],["Payroll Officer",2]]},
-    {id:"hr",name:"HR / People",short:"HR / People",group:"Corporate",w:0.05,abs:0.8,att:0.85,comp:4,er:0.8,tth:0.85,roles:[["Head of HR",1],["Regional HR Manager",1],["HR Business Partner",3],["HR Advisor",4],["L&D Advisor",2]]},
-    {id:"pro",name:"Procurement & Supply Chain",short:"Procurement",group:"Corporate",w:0.045,abs:0.85,att:0.95,comp:1,er:0.85,tth:0.90,roles:[["Procurement Manager",1],["Buyer",4],["Supply Chain Coordinator",3]]},
-    {id:"it",name:"IT & Digital",short:"IT & Digital",group:"Corporate",w:0.04,abs:0.7,att:1.05,comp:2,er:0.7,tth:1.00,roles:[["IT Manager",1],["IT Support Technician",4],["Data / BI Analyst",2]]},
-    {id:"mkt",name:"Marketing & Communications",short:"Marketing",group:"Corporate",w:0.035,abs:0.75,att:1.00,comp:2,er:0.75,tth:0.90,roles:[["Marketing Manager",1],["Communications Officer",2],["Digital Marketing Executive",2],["Bid Writer",2]]}
+    {id:"con",name:"Construction & Site",short:"Construction",group:"Delivery",w:0.415,abs:1.5,att:1.15,comp:-4,er:1.4,tth:0.95,roles:[["Construction Manager",1.5],["Site Manager",4],["Civils Site Engineer",6],["Overhead Linesperson",12],["Cable Jointer",9],["Substation Fitter",8]]},
+    {id:"pm",name:"Project Management",short:"Project Mgmt",group:"Delivery",w:0.16,abs:0.8,att:0.95,comp:1,er:0.8,tth:1.05,roles:[["Project Director",2,"R"],["Senior Project Manager",3],["Project Manager",6],["Project Engineer",7],["Graduate Project Manager",2]]},
+    {id:"eng",name:"Engineering & Design",short:"Engineering",group:"Delivery",w:0.14,abs:0.7,att:0.90,comp:1,er:0.7,tth:1.25,roles:[["Design Manager",1,"R"],["Senior Design Engineer",3],["Design Engineer",6],["Protection & Control Engineer",3],["CAD Technician",3]]},
+    {id:"com",name:"Commercial & Estimating",short:"Commercial",group:"Delivery",w:0.085,abs:0.8,att:1.00,comp:0,er:0.8,tth:1.10,roles:[["Commercial Manager",1,"R"],["Bid Manager",1,"R"],["Senior Quantity Surveyor",2],["Quantity Surveyor",4],["Estimator",3]]},
+    {id:"cmg",name:"Commissioning & Testing",short:"Commissioning",group:"Delivery",w:0.08,abs:1.3,att:1.05,comp:-2,er:1.1,tth:1.15,roles:[["Commissioning Manager",1,"R"],["Commissioning Engineer",4],["Test Technician",4]]},
+    {id:"shq",name:"SHEQ",short:"SHEQ",group:"Delivery",w:0.025,abs:1.1,att:0.90,comp:3,er:0.9,tth:1.00,roles:[["SHEQ Manager",1,"R"],["Health & Safety Advisor",4],["Environmental Advisor",1.5],["Quality Engineer",1.5]]},
+    {id:"fin",name:"Finance",short:"Finance",group:"Corporate",w:0.025,abs:0.75,att:0.85,comp:3,er:0.7,tth:0.90,roles:[["Finance Director",1,"U"],["Financial Controller",1,"R"],["Management Accountant",3],["Accounts Assistant",4],["Payroll Officer",2]]},
+    {id:"hr",name:"HR / People",short:"HR / People",group:"Corporate",w:0.015,abs:0.8,att:0.85,comp:4,er:0.8,tth:0.85,roles:[["Head of HR",1,"U"],["Regional HR Manager",1,"R"],["HR Business Partner",2],["HR Advisor",4],["L&D Advisor",1.5]]},
+    {id:"pro",name:"Procurement & Supply Chain",short:"Procurement",group:"Corporate",w:0.025,abs:0.85,att:0.95,comp:1,er:0.85,tth:0.90,roles:[["Procurement Manager",1,"R"],["Buyer",4],["Supply Chain Coordinator",3]]},
+    {id:"it",name:"IT & Digital",short:"IT & Digital",group:"Corporate",w:0.02,abs:0.7,att:1.05,comp:2,er:0.7,tth:1.00,roles:[["IT Manager",1,"U"],["IT Support Technician",4],["Data / BI Analyst",1.5]]},
+    {id:"mkt",name:"Marketing & Communications",short:"Marketing",group:"Corporate",w:0.01,abs:0.75,att:1.00,comp:2,er:0.75,tth:0.90,roles:[["Marketing Manager",1,"U"],["Communications Officer",2],["Digital Marketing Executive",2],["Bid Writer",3]]}
   ];
   var RMAP={},DMAP={};REGIONS.forEach(function(r){RMAP[r.id]=r;});DEPTS.forEach(function(d){DMAP[d.id]=d;});
 
-  /* invented names: none of these are real colleagues */
-  var FIRST=["Moira","Tomasz","Dervla","Callum","Priya","Gethin","Aoife","Marek","Shona","Kwame","Elin","Ruairi","Farah","Angus","Bronagh","Dawid","Nia","Fergus","Sunita","Iestyn","Orla","Lachlan","Zainab","Hywel","Catriona","Piotr","Niamh","Hamish","Amara","Rhodri","Sinead","Greig","Leila","Owain","Mhairi","Kofi","Eira","Declan","Yasmin","Struan","Carys","Emeka","Fionnuala","Ivo"];
-  var LAST=["Kessock","Brylka","Quillan","Tarbert","Vasani","Penhallow","Corrigle","Stanek","Abernyte","Oduya","Trevethan","Mullarney","Zaheer","Balcomie","Fennick","Wojtas","Pencarrow","Dunlossit","Radia","Aberdaron","Kilbride","Strathnaver","Okonjo","Llanrhos","Garvock","Halloran","Ostrowe","Tregear","Ballantrae","Musoke","Inverarity","Carnduff","Hesketh","Polglaze","Drumlin","Achebe","Skerray","Maddocks","Lisburne","Kowalczyk","Fintry","Rosemullion","Tullis","Egerton","Bavidge","Nethercote"];
+  /* invented names: none of these are real colleagues. 72 x 72 combinations, each used once at most */
+  var FIRST=["Moira","Tomasz","Dervla","Callum","Priya","Gethin","Aoife","Marek","Shona","Kwame","Elin","Ruairi","Farah","Angus","Bronagh","Dawid","Nia","Fergus","Sunita","Iestyn","Orla","Lachlan","Zainab","Hywel","Catriona","Piotr","Niamh","Hamish","Amara","Rhodri","Sinead","Greig","Leila","Owain","Mhairi","Kofi","Eira","Declan","Yasmin","Struan","Carys","Emeka","Fionnuala","Ivo","Ailsa","Bartek","Cerys","Dougal","Esme","Finlay","Gwenan","Harun","Isla","Jarlath","Keziah","Lorcan","Morven","Nadim","Oonagh","Padraig","Rhian","Seren","Tavish","Una","Vikram","Wynne","Zofia","Aled","Brodie","Clodagh","Darragh","Eilidh"];
+  var LAST=["Kessock","Brylka","Quillan","Tarbert","Vasani","Penhallow","Corrigle","Stanek","Abernyte","Oduya","Trevethan","Mullarney","Zaheer","Balcomie","Fennick","Wojtas","Pencarrow","Dunlossit","Radia","Aberdaron","Kilbride","Strathnaver","Okonjo","Llanrhos","Garvock","Halloran","Ostrowe","Tregear","Ballantrae","Musoke","Inverarity","Carnduff","Hesketh","Polglaze","Drumlin","Achebe","Skerray","Maddocks","Lisburne","Kowalczyk","Fintry","Rosemullion","Tullis","Egerton","Bavidge","Nethercote","Ardross","Bethune","Cadwallon","Dalwhinnie","Eskdale","Farquharson","Glenorchy","Hawksworth","Imrie","Jesmond","Kinloss","Lanyon","Mawdsley","Nancarrow","Ormiston","Pitlochrie","Quennell","Rathlin","Sandilands","Tintagel","Ullapool","Varley","Wetherden","Yarrow","Zelazny","Ancrum"];
 
-  /* headcount cells: region x department x role */
+  /* headcount cells: region x department x role. Department totals come first; fixed posts are taken out, then the rest is shared between the other roles */
   var CELLS=[];
   REGIONS.forEach(function(r){var rb=Math.round(r.scale*BASE_HC);
-    DEPTS.forEach(function(d){var s=d.roles.reduce(function(a,x){return a+x[1];},0);
-      d.roles.forEach(function(role){CELLS.push({r:r.id,d:d.id,role:role[0],hc:Math.max(1,Math.round(rb*d.w*role[1]/s)),people:[]});});});});
+    DEPTS.forEach(function(d){var dhc=Math.round(rb*d.w),fixed=d.roles.map(function(x){return x[2]==="R"?x[1]:(x[2]==="U"?(r.id===HOME?1:0):0);});
+      var rem=dhc-fixed.reduce(function(a,b){return a+b;},0),sh=alloc(Math.max(0,rem),d.roles.map(function(x){return x[2]?0:x[1];}));
+      d.roles.forEach(function(role,i){var hc=fixed[i]+sh[i];if(hc>0)CELLS.push({r:r.id,d:d.id,role:role[0],hc:hc,people:[]});});});});
   var TOTAL=CELLS.reduce(function(a,c){return a+c.hc;},0);
   function siteW(r){return r.sites.map(function(s){return hf(s,0.6,1.4);});}
 
-  /* colleagues */
+  /* colleagues: every name is unique */
   var PEOPLE=[];
-  CELLS.forEach(function(c,ci){var r=RMAP[c.r],sw=siteW(r);
-    for(var i=0;i<c.hc;i++){var u=rnd(),ten=u<0.14?rnd():Math.min(38,1-Math.log(1-rnd())*5.9);
-      var p={ci:ci,name:FIRST[Math.floor(rnd()*FIRST.length)]+" "+LAST[Math.floor(rnd()*LAST.length)],site:pick(r.sites,sw),role:c.role,tenure:ten};
-      c.people.push(p);PEOPLE.push(p);}});
+  (function(){var pairs=[],i;for(i=0;i<FIRST.length*LAST.length;i++)pairs.push(i);
+    for(i=pairs.length-1;i>0;i--){var j=Math.floor(rnd()*(i+1)),t=pairs[i];pairs[i]=pairs[j];pairs[j]=t;}
+    var k=0;
+    CELLS.forEach(function(c,ci){var r=RMAP[c.r],sw=siteW(r),grad=/Graduate/.test(c.role);
+      for(var n=0;n<c.hc;n++){var u=rnd(),ten=grad?rnd()*2.5:(u<0.165?rnd():1-Math.log(1-rnd())*6.0);
+        if(ten>36)ten=28+rnd()*10;var pr=pairs[k++%pairs.length];
+        var p={ci:ci,name:FIRST[pr%FIRST.length]+" "+LAST[Math.floor(pr/FIRST.length)],site:pick(r.sites,sw),role:c.role,tenure:ten,late:rnd()<0.3?6:0.4,od:0};
+        c.people.push(p);PEOPLE.push(p);}});})();
 
   var QTR=["Oct-Dec","Jan-Mar","Apr-Jun","Jul-Sep"];
   var MONS=["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"];
@@ -251,8 +258,7 @@ var M=(function(){
   var wAbs=CELLS.map(function(c){return c.hc*RMAP[c.r].absF*DMAP[c.d].abs;});
   var wEr=CELLS.map(function(c){return c.hc*DMAP[c.d].er;});
   var wAtt=CELLS.map(function(c){return c.hc*RMAP[c.r].attF*DMAP[c.d].att;});
-  var LEVEL=CELLS.map(function(c){return Math.max(60,Math.min(100,90+RMAP[c.r].compD+DMAP[c.d].comp+hf(c.role,-1,1)));});
-  var wTr=CELLS.map(function(c,i){return c.hc*(100-LEVEL[i]);});
+  var LEVEL=CELLS.map(function(c){return Math.max(60,Math.min(99,91+RMAP[c.r].compD+DMAP[c.d].comp+hf(c.role,-1,1)));});
   var TTH=CELLS.map(function(c){return 46*RMAP[c.r].tthF*DMAP[c.d].tth;});
 
   /* absence */
@@ -270,19 +276,29 @@ var M=(function(){
   LTS.sort(function(a,b){return b.weeks-a.weeks;});LTS.forEach(function(x,i){x.ref="LTS-"+(101+i);});
 
   /* employee relations */
-  var ER_TYPE=[["Disciplinary",38],["Long-term sickness",29],["Grievance",26],["Capability",21],["Flexible working",14],["Other",10]];
-  var ER_BANDS=[["0-14 days",0.355,1,14],["15-30 days",0.285,15,30],["31-60 days",0.19,31,60],["61-90 days",0.10,61,90],["90+ days",0.07,91,128]];
-  var ER_FLOW=[["Apr",28,24],["May",26,27],["Jun",24,26],["Jul",25,28],["Aug",22,27],["Sep",23,28]];
-  var ER=[];
-  (function(){var per=sample(138,wEr),bandN=alloc(138,ER_BANDS.map(function(b){return b[1];})),bag=[];
-    bandN.forEach(function(n,b){for(var i=0;i<n;i++)bag.push(b);});
+  var ER_TYPE=[["Disciplinary",38],["Long-term sickness",0],["Grievance",26],["Capability",21],["Flexible working",14],["Other",10]];
+  var ER_BANDS=[["0-14 days",34,1,14],["15-30 days",32,15,30],["31-60 days",48,31,60],["61-90 days",14,61,90],["90+ days",10,91,128]];
+  var ER_FLOW=[["Apr",78,72],["May",76,77],["Jun",73,76],["Jul",75,79],["Aug",72,77],["Sep",74,79]];
+  var ER_TOTAL=138,ER=[];
+  (function(){var quota=ER_BANDS.map(function(b){return b[1];});
+    /* long-term sickness ER cases are the long-term absence cases that have reached a formal stage, so the two pages always agree */
+    LTS.filter(function(x){return x.weeks>=16;}).forEach(function(x){var maxAge=Math.min(128,(x.weeks-12)*7);
+      var ok=ER_BANDS.map(function(b,i){return (b[2]<=maxAge&&quota[i]>0)?quota[i]:0;}),bi=pick([0,1,2,3,4],ok),b=ER_BANDS[bi];quota[bi]--;
+      var hi=Math.min(b[3],maxAge);
+      ER.push({ci:x.ci,site:x.site,role:x.role,band:b[0],age:b[2]+Math.floor(rnd()*(hi-b[2]+1)),type:"Long-term sickness",lts:x.ref});});
+    var bag=[];quota.forEach(function(n,b){for(var i=0;i<n;i++)bag.push(b);});
     for(var i=bag.length-1;i>0;i--){var j=Math.floor(rnd()*(i+1)),t=bag[i];bag[i]=bag[j];bag[j]=t;}
-    var k=0;per.forEach(function(n,ci){var r=RMAP[CELLS[ci].r],sw=siteW(r);
+    var types=ER_TYPE.filter(function(x){return x[1]>0;}),k=0;
+    sample(bag.length,wEr).forEach(function(n,ci){var r=RMAP[CELLS[ci].r],sw=siteW(r);
       for(var i=0;i<n;i++){var b=ER_BANDS[bag[k++]];
         ER.push({ci:ci,site:pick(r.sites,sw),role:CELLS[ci].role,band:b[0],age:b[2]+Math.floor(rnd()*(b[3]-b[2]+1)),
-          type:pick(ER_TYPE.map(function(x){return x[0];}),ER_TYPE.map(function(x){return x[1];}))});}});
+          type:pick(types.map(function(x){return x[0];}),types.map(function(x){return x[1];}))});}});
     ER.sort(function(a,b){return b.age-a.age;});ER.forEach(function(x,i){x.ref="ER-"+(2301+i);});})();
-  var cOpened=ER_FLOW.map(function(m,k){return alloc(m[1],wEr.map(function(w,i){return w*hf("o"+k+"_"+i,0.6,1.4);}));});
+  /* cases opened each month always include the cases of that age that are still open */
+  function ageMonth(a){return a<=30?5:(a<=60?4:(a<=90?3:(a<=120?2:1)));}
+  var cOpened=ER_FLOW.map(function(m,k){var base=CELLS.map(function(){return 0;});ER.forEach(function(x){if(ageMonth(x.age)===k)base[x.ci]++;});
+    var used=base.reduce(function(a,b){return a+b;},0),extra=alloc(Math.max(0,m[1]-used),wEr.map(function(w,i){return w*hf("o"+k+"_"+i,0.6,1.4);}));
+    return base.map(function(v,i){return v+extra[i];});});
   var cClosed=ER_FLOW.map(function(m,k){return alloc(m[2],wEr.map(function(w,i){return w*hf("c"+k+"_"+i,0.6,1.4);}));});
   var cResolved=sample(16,wEr);
 
@@ -292,26 +308,30 @@ var M=(function(){
   var VOLUNTARY={"Career progression":1,"Better pay":1,"Relocation":1,"Work-life balance":1,"Other":1};
   var LEAVERS=[];
   alloc(Math.round(TOTAL*0.151),wAtt).forEach(function(n,ci){var r=RMAP[CELLS[ci].r],sw=siteW(r);
-    for(var i=0;i<n;i++){var fy=rnd()<0.27,reason=pick(HC_REASON.map(function(x){return x[0];}),HC_REASON.map(function(x){return x[1];}));
+    for(var i=0;i<n;i++){var fy=rnd()<0.33,reason=pick(HC_REASON.map(function(x){return x[0];}),HC_REASON.map(function(x){return x[1];}));
       if(fy&&reason==="Retirement")reason="Better pay";
       LEAVERS.push({ci:ci,site:pick(r.sites,sw),role:CELLS[ci].role,reason:reason,q:pick([0,1,2,3],[23,25,27,25]),fy:fy});}});
 
   /* training */
   var TR_TREND=[83,84,85,86,87,87,88,88,89,89,90,90];
   var COURSES=[
-    {name:"Site Safety Induction",off:8,w:24,corp:false},
-    {name:"Fire Safety",off:6,w:32,corp:true},
-    {name:"Manual Handling",off:4,w:56,corp:true},
-    {name:"GDPR / Data",off:2,w:78,corp:true},
-    {name:"First Aid",off:-1,w:104,corp:true},
-    {name:"Working at Height",off:-4,w:168,corp:false},
-    {name:"HV / LV Awareness",off:-7,w:150,corp:false}];
+    {name:"Site Safety Induction",off:6,corp:false},
+    {name:"Fire Safety",off:5,corp:true},
+    {name:"Manual Handling",off:3,corp:true},
+    {name:"GDPR / Data",off:1,corp:true},
+    {name:"First Aid",off:-2,corp:true},
+    {name:"Working at Height",off:-5,corp:false},
+    {name:"HV / LV Awareness",off:-7,corp:false}];
+  function needs(ci,c){return c.corp||DMAP[CELLS[ci].d].group!=="Corporate";}
+  var NCOURSE=CELLS.map(function(c,ci){return COURSES.filter(function(x){return needs(ci,x);}).length;});
+  /* one overdue record per colleague per course at most; compliance is worked out from these records */
   var OVERDUE=[];
-  alloc(612,wTr).forEach(function(n,ci){var c=CELLS[ci],corp=DMAP[c.d].group==="Corporate";
-    var cs=COURSES.filter(function(x){return !corp||x.corp;});
-    for(var i=0;i<n;i++){var p=c.people[Math.floor(rnd()*c.people.length)];
-      OVERDUE.push({ci:ci,site:p.site,role:c.role,name:p.name,course:pick(cs,cs.map(function(x){return x.w;})).name,days:Math.min(210,1+Math.floor(-Math.log(1-rnd())*42))});}});
-  var cExpiring=alloc(840,CELLS.map(function(c,i){return c.hc*hf("e"+i,0.6,1.4);}));
+  CELLS.forEach(function(c,ci){COURSES.forEach(function(co){if(!needs(ci,co))return;
+    var p=1-Math.max(60,Math.min(99.5,LEVEL[ci]+co.off))/100,ex=c.hc*p,n=Math.floor(ex)+(rnd()<ex-Math.floor(ex)?1:0);
+    var pool=c.people.filter(function(x){return x.tenure>0.2;}),w=pool.map(function(x){return x.late;});
+    for(var i=0;i<n&&pool.length;i++){var who=pick(pool,w),j=pool.indexOf(who);pool.splice(j,1);w.splice(j,1);who.od++;
+      OVERDUE.push({ci:ci,site:who.site,role:c.role,name:who.name,course:co.name,days:Math.max(1,Math.min(1+Math.floor(-Math.log(1-rnd())*42),Math.floor(who.tenure*365)-45))});}});});
+  var cExpiring=alloc(840,CELLS.map(function(c,i){return c.hc*NCOURSE[i]*hf("e"+i,0.6,1.4);}));
 
   /* ---------- selection helpers ---------- */
   function inSel(c,s){return (s.region==="all"||c.r===s.region)&&(s.dept==="all"||c.d===s.dept)&&(s.role==="all"||c.role===s.role);}
@@ -341,14 +361,27 @@ var M=(function(){
     var fyL=o.leavers.filter(function(x){return x.fy;}).length;
     o.fy=(o.starters.length+fyL)?fyL/(o.starters.length+fyL)*100:0;
     o.tenure=head?o.people.reduce(function(a,p){return a+p.tenure;},0)/head:0;
-    var tw=0,lw=0;CELLS.forEach(function(c,i){if(mk[i]){tw+=c.hc*TTH[i];lw+=c.hc*LEVEL[i];}});
-    o.tth=head?tw/head:0;o.comp=head?lw/head:0;
-    o.fully=Math.max(40,Math.min(100,74+(o.comp-90)*1.5));
+    var tw=0;CELLS.forEach(function(c,i){if(mk[i])tw+=c.hc*TTH[i];});
+    o.tth=head?tw/head:0;
     o.overdue=recs(OVERDUE,mk);o.expiring=sumC(cExpiring,mk);
+    o.req=0;CELLS.forEach(function(c,i){if(mk[i])o.req+=c.hc*NCOURSE[i];});
+    o.comp=o.req?(1-o.overdue.length/o.req)*100:0;
+    o.fully=head?o.people.filter(function(p){return p.od===0;}).length/head*100:0;
     return o;
   }
 
-  return {hf:hf,REGIONS:REGIONS,DEPTS:DEPTS,RMAP:RMAP,DMAP:DMAP,CELLS:CELLS,TOTAL:TOTAL,PEOPLE:PEOPLE,QTR:QTR,MONS:MONS,
+  /* per-location figures for a selection: regions when all regions are selected, otherwise sites. Site absence rates are scaled so they average back to the selection's rate */
+  function locStats(s,m){
+    if(s.region==="all")return REGIONS.map(function(r){var x=metrics(sub(s,"region",r.id));return {name:r.name,hc:x.head,abs:x.absRate,comp:x.comp,req:x.req,od:x.overdue.length};});
+    var r=RMAP[s.region],st=r.sites.map(function(n){return {name:n,hc:0,req:0,od:0,j:hf(n,0.86,1.14)};}),ix={};st.forEach(function(x){ix[x.name]=x;});
+    m.people.forEach(function(p){var x=ix[p.site];x.hc++;x.req+=NCOURSE[p.ci];});m.overdue.forEach(function(o){ix[o.site].od++;});
+    var w=st.reduce(function(a,x){return a+x.hc*x.j;},0),norm=m.head?w/m.head:1;
+    st.forEach(function(x){x.abs=m.absRate*x.j/norm;x.comp=x.req?(1-x.od/x.req)*100:0;});return st;}
+  function courseStats(m){return COURSES.map(function(c){var req=0;CELLS.forEach(function(cl,i){if(m.mask[i]&&needs(i,c))req+=cl.hc;});
+    var od=m.overdue.filter(function(x){return x.course===c.name;}).length;return {name:c.name,req:req,od:od,comp:req?(1-od/req)*100:null};});}
+  function headOf(mk){return sumC(HCARR,mk);}
+
+  return {hf:hf,locStats:locStats,courseStats:courseStats,headOf:headOf,WORKDAYS:WORKDAYS,ER_FLOW:ER_FLOW,NCOURSE:NCOURSE,REGIONS:REGIONS,DEPTS:DEPTS,RMAP:RMAP,DMAP:DMAP,CELLS:CELLS,TOTAL:TOTAL,PEOPLE:PEOPLE,QTR:QTR,MONS:MONS,
     ABS_TREND:ABS_TREND,ABS_REASON:ABS_REASON,ER_TYPE:ER_TYPE,ER_BANDS:ER_BANDS,HC_TREND:HC_TREND,HC_REASON:HC_REASON,
     TR_TREND:TR_TREND,COURSES:COURSES,cShort:cShort,cLong:cLong,cOpened:cOpened,cClosed:cClosed,
     metrics:metrics,mask:mask,sumC:sumC,locOf:locOf,locs:locs,sub:sub,startQ:startQ,startMon:startMon,alloc:alloc};
@@ -407,7 +440,7 @@ var M=(function(){
     $("#kpis").innerHTML=[
       {l:"Headcount",v:nf(total),s:regLabel,alt:false},
       {l:"Departments",v:String(M.DEPTS.length),s:"6 delivery, 5 corporate",alt:true},
-      {l:"Role types",v:String(roleTypes),s:"distinct job roles",alt:false},
+      {l:"Role types",v:String(roleTypes),s:scope==="all"?"distinct job roles":"across UK & Ireland",alt:false},
       {l:"Delivery share",v:delPct+"%",s:"of the workforce",alt:false},
       {l:"Corporate share",v:corPct+"%",s:"support functions",alt:true}
     ].map(function(k){return '<div class="kpi'+(k.alt?' alt':'')+'"><div class="k-l">'+k.l+'</div><div class="k-v">'+k.v+'</div><div class="k-s">'+k.s+'</div></div>';}).join("");
@@ -434,16 +467,19 @@ var M=(function(){
     var rows=[];
     M.DEPTS.forEach(function(d){
       if(state.dept&&d.id!==state.dept)return;
-      d.roles.forEach(function(r){var m=M.metrics({region:scope,dept:d.id,role:r[0]});rows.push({dept:d.name,group:d.group,role:r[0],hc:m.head,ten:m.tenure});});
+      d.roles.forEach(function(r){var m=M.metrics({region:scope,dept:d.id,role:r[0]});if(m.head>0)rows.push({dept:d.name,group:d.group,role:r[0],hc:m.head,ten:m.tenure});});
     });
     rows.sort(function(a,b){return b.hc-a.hc;});
     var maxhc=Math.max.apply(null,rows.map(function(r){return r.hc;}));
+    /* percentages in tenths, forced to total exactly 100.0 */
+    var tenths=M.alloc(1000,rows.map(function(r){return r.hc;}));rows.forEach(function(r,i){r.pct=(tenths[i]/10).toFixed(1);});
+    $("#shareh").textContent=state.dept?"% of department":"% of headcount";
     var dname=state.dept?M.DMAP[state.dept].name:null;
     $("#rolestitle").textContent=dname?("Roles in "+dname):"All roles";
-    $("#rolessub").textContent=dname?("Headcount for "+regLabel+"."):("Every role type, "+regLabel+". Click a department bar to focus.");
+    $("#rolessub").textContent=dname?("Headcount for "+regLabel+". Percentages are each role's share of the department and total 100%."):("Every role type, "+regLabel+". Percentages are each role's share of total headcount and total 100%. Click a department bar to focus.");
     $("#rolesbody").innerHTML=rows.map(function(r){
-      var w=Math.max(6,Math.round(110*r.hc/maxhc));
-      return '<tr><td>'+esc(r.dept)+'</td><td>'+esc(r.role)+'</td><td><span class="grp '+(r.group==="Corporate"?"g-cor":"g-del")+'">'+r.group+'</span></td><td class="n">'+nf(r.hc)+'</td><td><span class="mbar'+(r.group==="Corporate"?" cor":"")+'" style="width:'+w+'px"></span></td><td class="n">'+r1(r.ten).toFixed(1)+' yrs</td></tr>';
+      var w=Math.max(4,Math.round(100*r.hc/maxhc));
+      return '<tr><td>'+esc(r.dept)+'</td><td>'+esc(r.role)+'</td><td><span class="grp '+(r.group==="Corporate"?"g-cor":"g-del")+'">'+r.group+'</span></td><td class="n">'+nf(r.hc)+'</td><td><span class="mbar'+(r.group==="Corporate"?" cor":"")+'" style="width:'+w+'px"></span> <span style="font-variant-numeric:tabular-nums">'+r.pct+'%</span></td><td class="n">'+r1(r.ten).toFixed(1)+' yrs</td></tr>';
     }).join("");
     var cl=$("#clear");
     if(dname){cl.hidden=false;$("#clearname").textContent=dname;}else{cl.hidden=true;}
