@@ -1,101 +1,164 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="author" content="Paul Akomeah">
 <title>Workforce Explorer</title>
 <style>
-  /* Layout: workforce org explorer. Region slicer, KPI tiles, department bars (click to drill), region bars, roles table. Omexom brand tokens. */
+  /* Layout: report with top band, page tabs, global slicers and chart grids. */
   :root{
     --bg:#eef1f4; --surface:#ffffff; --surface-2:#f6f8fa;
-    --ink:#182230; --muted:#5b6670; --faint:#8a94a0;
+    --ink:#182230; --muted:#5b6670; --faint:#6f7985;
     --grid:#e7ebef; --border:#e1e6ea;
     --brand:#0071ce; --brand-deep:#005ca8; --cyan:#00a7c6; --amber:#e39a00;
-    --band:#0071ce; --band-ink:#ffffff; --band-sub:#cfe6fb;
+    --good:#1c8a57; --good-bg:#e3f3ea; --warn:#8f6500; --warn-bg:#fcf0d4; --risk:#c5362c; --risk-bg:#fbe6e3;
+    --band:#0071ce; --band-ink:#ffffff; --band-sub:#dcecfb;
     --shadow:0 1px 2px rgba(16,38,60,.06),0 2px 10px rgba(16,38,60,.05);
     --r:10px; --f:"Arial","Helvetica Neue",Helvetica,system-ui,sans-serif;
   }
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
     --bg:#0e141b; --surface:#161e27; --surface-2:#121922;
-    --ink:#e8edf2; --muted:#9aa6b2; --faint:#73808d;
+    --ink:#e8edf2; --muted:#9aa6b2; --faint:#8793a0;
     --grid:#243039; --border:#263340;
     --brand:#2e9be6; --brand-deep:#5bb4ef; --cyan:#35c6e0; --amber:#ffc23f;
+    --good:#4cc38a; --good-bg:#143326; --warn:#f0c04a; --warn-bg:#3a2f10; --risk:#ff8278; --risk-bg:#3d1b18;
     --band:#0b2740; --band-ink:#ffffff; --band-sub:#bcd6ef;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 2px 12px rgba(0,0,0,.35); color-scheme:dark;
   }}
   :root[data-theme="dark"]{
     --bg:#0e141b; --surface:#161e27; --surface-2:#121922;
-    --ink:#e8edf2; --muted:#9aa6b2; --faint:#73808d;
+    --ink:#e8edf2; --muted:#9aa6b2; --faint:#8793a0;
     --grid:#243039; --border:#263340;
     --brand:#2e9be6; --brand-deep:#5bb4ef; --cyan:#35c6e0; --amber:#ffc23f;
+    --good:#4cc38a; --good-bg:#143326; --warn:#f0c04a; --warn-bg:#3a2f10; --risk:#ff8278; --risk-bg:#3d1b18;
     --band:#0b2740; --band-ink:#ffffff; --band-sub:#bcd6ef;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 2px 12px rgba(0,0,0,.35); color-scheme:dark;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.4}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.45}
   .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:0 28px}
-  .band{background:var(--band);color:var(--band-ink);border-radius:0 0 14px 14px;padding:16px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .band{background:var(--band);color:var(--band-ink);border-radius:0 0 14px 14px;padding:14px 20px;display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
   .mark{font-weight:700;letter-spacing:.14em;font-size:20px}
   .band h1{font-size:15px;font-weight:700;margin:0;line-height:1.2}
   .band .sub{color:var(--band-sub);font-size:12px;margin-top:2px}
-  .band .spacer{flex:1 1 40px}
+  .band .spacer{flex:1 1 20px}
   .badge{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;letter-spacing:.04em}
-  .tbtn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.32);border-radius:8px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer}
+  .tbtn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.32);border-radius:8px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);text-decoration:none;display:inline-block}
   .tbtn:hover{background:rgba(255,255,255,.26)}
-  .slicers{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:16px 0 2px}
-  .slicer{display:flex;flex-direction:column;gap:4px}
-  .slicer label{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-  .slicer select{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;font-family:var(--f);min-width:200px;box-shadow:var(--shadow)}
-  .slicer select:focus-visible,.tbtn:focus-visible,.chipbtn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
-  .chipbtn{align-self:flex-end;background:var(--surface);color:var(--brand-deep);border:1px solid var(--brand);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)}
+  .tbtn[aria-current="page"]{background:#fff;color:#005ca8;border-color:#fff}
+  .nav{display:flex;gap:6px;flex-wrap:wrap}
+  .by{font-size:12px;color:var(--muted);margin:10px 2px 0}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin:10px 0 2px;border-bottom:2px solid var(--border)}
+  .tab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:9px 14px;font-family:var(--f);font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer;border-radius:6px 6px 0 0}
+  .tab:hover{color:var(--ink);background:var(--surface-2)}
+  .tab[aria-selected="true"]{color:var(--brand-deep);border-bottom-color:var(--brand)}
+  .tab:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .slicers{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:14px 0 2px}
+  .slicer{display:flex;flex-direction:column;gap:4px;flex:0 1 auto}
+  .slicer label,.slicer .lab{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .slicer select,.chip{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;font-family:var(--f);min-width:170px;max-width:100%;box-shadow:var(--shadow)}
+  .chip{display:inline-flex;align-items:center;min-width:0;font-weight:600}
+  .slicer select:focus-visible,.tbtn:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .linkbtn{background:none;border:none;color:var(--brand-deep);font-family:var(--f);font-size:12px;font-weight:700;cursor:pointer;padding:9px 4px;text-decoration:underline}
   .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:14px 0}
+  .kpis.six{grid-template-columns:repeat(6,1fr)}
   .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
   .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand)}
-  .kpi.alt::before{background:var(--cyan)}
+  .kpi.s-good::before{background:var(--good)} .kpi.s-warn::before{background:var(--amber)} .kpi.s-risk::before{background:var(--risk)}
   .kpi .k-l{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-  .kpi .k-v{font-size:26px;font-weight:700;margin:4px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-  .kpi .k-s{font-size:11px;color:var(--faint)}
-  .grid{display:grid;grid-template-columns:1.6fr 1fr;gap:12px}
+  .kpi .k-v{font-size:26px;font-weight:700;margin:4px 0 4px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .kpi .k-d{font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+  .kpi .k-s{font-size:11px;color:var(--faint);margin-top:4px}
+  .c-good{color:var(--good)} .c-risk{color:var(--risk)} .c-flat{color:var(--muted)}
+  .grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:12px}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px 12px;box-shadow:var(--shadow);min-width:0;margin-top:12px}
   .card h2{font-size:13px;margin:0 0 2px;font-weight:700}
   .card .h-sub{font-size:11px;color:var(--faint);margin:0 0 8px}
+  .insight{border-left:4px solid var(--brand);padding:14px 18px}
+  .insight h2{font-size:15px;margin-bottom:6px}
+  .insight p{margin:0 0 8px;font-size:13.5px;max-width:92ch}
+  .insight h3{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
+  .insight ul{margin:0 0 4px;padding-left:18px;max-width:92ch}
+  .insight li{margin:0 0 5px;font-size:13.5px}
+  .insight .how{font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:9px;margin:12px 0 2px}
+  .prose p,.prose li{font-size:13.5px;max-width:86ch}
+  .prose p{margin:0 0 8px}
+  .prose ul,.prose ol{margin:0 0 6px;padding-left:18px}
+  .prose li{margin:0 0 6px}
   .legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin:2px 0 6px;flex-wrap:wrap}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
   svg{width:100%;height:auto;display:block;overflow:visible}
   .ax{fill:var(--muted);font-size:11px} .vlab{fill:var(--ink);font-size:11px;font-weight:700}
+  .gl{stroke:var(--grid);stroke-width:1}
   table{width:100%;border-collapse:collapse;font-size:12.5px}
   th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--border)}
   th{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
   td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  tr.sel td{background:var(--surface-2);font-weight:700}
+  tr.tot td{font-weight:700;border-top:2px solid var(--border)}
+  tr.pickrow{cursor:pointer} tr.pickrow:hover td{background:var(--surface-2)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+  .p-good{background:var(--good-bg);color:var(--good)} .p-warn{background:var(--warn-bg);color:var(--warn)} .p-risk{background:var(--risk-bg);color:var(--risk)}
+  .note{font-size:11.5px;color:var(--faint);margin-top:16px;line-height:1.55}
+  #tip{position:fixed;pointer-events:none;z-index:50;background:#182230;color:#fff;padding:8px 11px;border-radius:8px;font-size:12px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.3);opacity:0;transition:opacity .08s;max-width:min(320px,calc(100vw - 16px));line-height:1.4;left:0;top:0}
+  #tip .t2{font-weight:400}
+  #tip .tl{font-weight:700;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;margin:7px 0 2px;color:#bcd6ef}
+  #tip ol{margin:0;padding-left:16px;font-weight:400}
+  #tip .tf{font-weight:400;font-size:11px;color:#bcd6ef;margin-top:5px}
+  .hit{fill:transparent;cursor:crosshair}
+  .bar{cursor:pointer}
+  @media (max-width:1000px){.kpis.six{grid-template-columns:repeat(3,1fr)}}
+  @media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)} .kpis.six{grid-template-columns:repeat(2,1fr)} .grid,.grid2,.cols2{grid-template-columns:1fr} .grid>.card,.grid2>.card,.cols2>.card{margin-top:0} .grid,.grid2,.cols2{margin-top:12px}}
+  @media (min-width:901px){.grid>.card,.grid2>.card,.cols2>.card{margin-top:12px}}
+  @media (max-width:560px){.slicer{flex:1 1 100%} .slicer select{width:100%} .band{padding:12px 14px} .kpi .k-v{font-size:22px}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  @media print{
+    body{background:#fff;font-size:12px} .tabs,.slicers,#theme,.nav,#tip,.how{display:none!important}
+    .band{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .card,.kpi{box-shadow:none;break-inside:avoid} .pill,.kpi::before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .wrap{max-width:none;padding:0 6px}
+  }
   .grp{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700}
   .g-del{background:#e4f0fb;color:#0a5ea8} .g-cor{background:#e2f6fa;color:#0a7488}
-  :root[data-theme="dark"] .g-del,:root:not([data-theme="light"]) .g-del{background:#143049;color:#79b8e8}
-  :root[data-theme="dark"] .g-cor,:root:not([data-theme="light"]) .g-cor{background:#113038;color:#4fc6dd}
+  :root[data-theme="dark"] .g-del{background:#143049;color:#79b8e8}
+  :root[data-theme="dark"] .g-cor{background:#113038;color:#4fc6dd}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .g-del{background:#143049;color:#79b8e8} :root:not([data-theme="light"]) .g-cor{background:#113038;color:#4fc6dd}}
   .mbar{height:8px;border-radius:4px;background:var(--brand);display:inline-block;vertical-align:middle}
   .mbar.cor{background:var(--cyan)}
-  .note{font-size:11px;color:var(--faint);margin-top:16px;line-height:1.5}
-  #tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--surface);padding:6px 9px;border-radius:7px;font-size:12px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;transition:opacity .08s;white-space:nowrap}
-  #tip .t2{font-weight:400;opacity:.85}
-  .bar{cursor:pointer}
-  @media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)} .grid{grid-template-columns:1fr}}
-  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  .kpi.alt::before{background:var(--cyan)}
+  .wgrid{display:grid;grid-template-columns:1.6fr 1fr;gap:12px}
+  .wgrid>.card{margin-top:12px}
+  @media (max-width:900px){.wgrid{grid-template-columns:1fr;margin-top:12px} .wgrid>.card{margin-top:0}}
 </style>
-
+</head>
+<body>
 <div class="band">
   <span class="mark">OMEXOM</span>
   <div><h1>Workforce &amp; Org Structure</h1><div class="sub">Regions, departments and roles</div></div>
   <span class="spacer"></span>
+  <nav class="nav" aria-label="Dashboards">
+    <a class="tbtn" href="index.html">People Analytics</a>
+    <a class="tbtn" href="workforce.html" aria-current="page">Workforce Explorer</a>
+  </nav>
   <span class="badge">Illustrative sample data</span>
   <button class="tbtn" id="theme" type="button" aria-label="Toggle light or dark theme">Dark</button>
 </div>
 
 <div class="wrap">
+  <p class="by">Prepared by Paul Akomeah MCIPD for interview discussion. Every figure and every name here is invented sample data. None of it is Omexom data.</p>
   <div class="slicers">
-    <div class="slicer">
-      <label for="region">Region</label>
-      <select id="region"></select>
-    </div>
-    <button class="chipbtn" id="clear" type="button" hidden>Roles filter: <span id="clearname"></span> &times;</button>
+    <div class="slicer"><label for="region">Region</label><select id="region"></select></div>
+    <button class="linkbtn" id="clear" type="button" hidden>Clear department filter: <span id="clearname"></span></button>
   </div>
 
+  <div id="insight"></div>
   <div class="kpis" id="kpis"></div>
 
-  <div class="grid">
+  <div class="wgrid">
     <div class="card">
       <h2>Headcount by department</h2>
       <p class="h-sub">Click a department bar to see the roles within it.</p>
@@ -104,7 +167,7 @@
     </div>
     <div class="card">
       <h2>Headcount by region</h2>
-      <p class="h-sub">Across the UK and Ireland.</p>
+      <p class="h-sub">Across the UK and Ireland. Click a bar to select that region.</p>
       <div id="c_region"></div>
     </div>
   </div>
@@ -113,7 +176,7 @@
     <h2 id="rolestitle">All roles</h2>
     <p class="h-sub" id="rolessub">Every role type, grouped by department.</p>
     <div style="overflow-x:auto"><table><thead><tr>
-      <th>Department</th><th>Role</th><th>Group</th><th class="n">Headcount</th><th style="width:120px">Share</th>
+      <th>Department</th><th>Role</th><th>Group</th><th class="n">Headcount</th><th style="width:120px">Share</th><th class="n">Avg tenure</th>
     </tr></thead><tbody id="rolesbody"></tbody></table></div>
   </div>
 
@@ -122,115 +185,269 @@
 <div id="tip" role="status" aria-live="polite"></div>
 
 <script>
+/* ---------- shared sample data model (identical on both pages) ---------- */
+var M=(function(){
+  "use strict";
+  function hf(s,lo,hi){var h=0,i;for(i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return lo+(h%997)/997*(hi-lo);}
+  function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  var rnd=mulberry(20261016);
+  function pick(arr,w){var s=0,i;for(i=0;i<w.length;i++)s+=w[i];var x=rnd()*s;for(i=0;i<arr.length;i++){x-=w[i];if(x<0)return arr[i];}return arr[arr.length-1];}
+  function alloc(total,w){var s=0,i;for(i=0;i<w.length;i++)s+=w[i];var out=[],fr=[],used=0;
+    for(i=0;i<w.length;i++){var raw=s>0?total*w[i]/s:0,f=Math.floor(raw);out.push(f);fr.push([i,raw-f]);used+=f;}
+    fr.sort(function(a,b){return b[1]-a[1]||a[0]-b[0];});
+    for(i=0;i<total-used;i++)out[fr[i%fr.length][0]]++;
+    return out;}
+  function sample(total,w){var out=w.map(function(){return 0;}),idx=w.map(function(x,i){return i;});for(var i=0;i<total;i++)out[pick(idx,w)]++;return out;}
+
+  var WORKDAYS=228,COST_PER_DAY=140,BASE_HC=850;
+  var REGIONS=[
+    {id:"sco",name:"Scotland",scale:1.25,absF:1.08,attF:1.05,compD:-3,tthF:1.08,sites:["Inverness","Aberdeen","Glasgow","Edinburgh","Dundee"]},
+    {id:"nor",name:"North of England",scale:0.90,absF:0.98,attF:1.00,compD:-1,tthF:1.00,sites:["Newcastle","Leeds","Manchester","Sheffield","Hull"]},
+    {id:"mid",name:"Midlands & East",scale:1.10,absF:0.95,attF:0.97,compD:1,tthF:0.96,sites:["Birmingham","Leicester","Nottingham","Coventry","Derby","Peterborough"]},
+    {id:"lon",name:"London & South East",scale:0.85,absF:0.97,attF:1.05,compD:2,tthF:1.06,sites:["London","Reading","Crawley","Maidstone","Chelmsford"]},
+    {id:"wal",name:"Wales & West",scale:0.80,absF:1.00,attF:0.98,compD:0,tthF:0.98,sites:["Cardiff","Bristol","Swansea","Gloucester","Exeter"]},
+    {id:"irl",name:"Ireland",scale:0.95,absF:1.02,attF:0.95,compD:1,tthF:0.95,sites:["Belfast","Dublin","Cork","Galway","Limerick"]}
+  ];
+  var DEPTS=[
+    {id:"con",name:"Construction & Site",short:"Construction",group:"Delivery",w:0.28,abs:1.5,att:1.15,comp:-4,er:1.4,tth:0.95,roles:[["Construction Manager",2],["Site Manager",4],["Civils Site Engineer",6],["Overhead Linesperson",10],["Cable Jointer",7],["Substation Fitter",7]]},
+    {id:"pm",name:"Project Management",short:"Project Mgmt",group:"Delivery",w:0.15,abs:0.8,att:0.95,comp:1,er:0.8,tth:1.05,roles:[["Project Director",1],["Senior Project Manager",3],["Project Manager",6],["Project Engineer",7],["Graduate Project Manager",3]]},
+    {id:"eng",name:"Engineering & Design",short:"Engineering",group:"Delivery",w:0.13,abs:0.7,att:0.90,comp:1,er:0.7,tth:1.25,roles:[["Design Manager",1],["Senior Design Engineer",3],["Design Engineer",6],["Protection & Control Engineer",3],["CAD Technician",3]]},
+    {id:"com",name:"Commercial & Estimating",short:"Commercial",group:"Delivery",w:0.08,abs:0.8,att:1.00,comp:0,er:0.8,tth:1.10,roles:[["Commercial Manager",1],["Senior Quantity Surveyor",2],["Quantity Surveyor",4],["Estimator",3],["Bid Manager",1]]},
+    {id:"cmg",name:"Commissioning & Testing",short:"Commissioning",group:"Delivery",w:0.07,abs:1.3,att:1.05,comp:-2,er:1.1,tth:1.15,roles:[["Commissioning Manager",1],["Commissioning Engineer",4],["Test Technician",4]]},
+    {id:"shq",name:"SHEQ",short:"SHEQ",group:"Delivery",w:0.06,abs:1.1,att:0.90,comp:3,er:0.9,tth:1.00,roles:[["SHEQ Manager",1],["Health & Safety Advisor",4],["Environmental Advisor",2],["Quality Engineer",2]]},
+    {id:"fin",name:"Finance",short:"Finance",group:"Corporate",w:0.06,abs:0.75,att:0.85,comp:3,er:0.7,tth:0.90,roles:[["Finance Director",1],["Financial Controller",1],["Management Accountant",3],["Accounts Assistant",4],["Payroll Officer",2]]},
+    {id:"hr",name:"HR / People",short:"HR / People",group:"Corporate",w:0.05,abs:0.8,att:0.85,comp:4,er:0.8,tth:0.85,roles:[["Head of HR",1],["Regional HR Manager",1],["HR Business Partner",3],["HR Advisor",4],["L&D Advisor",2]]},
+    {id:"pro",name:"Procurement & Supply Chain",short:"Procurement",group:"Corporate",w:0.045,abs:0.85,att:0.95,comp:1,er:0.85,tth:0.90,roles:[["Procurement Manager",1],["Buyer",4],["Supply Chain Coordinator",3]]},
+    {id:"it",name:"IT & Digital",short:"IT & Digital",group:"Corporate",w:0.04,abs:0.7,att:1.05,comp:2,er:0.7,tth:1.00,roles:[["IT Manager",1],["IT Support Technician",4],["Data / BI Analyst",2]]},
+    {id:"mkt",name:"Marketing & Communications",short:"Marketing",group:"Corporate",w:0.035,abs:0.75,att:1.00,comp:2,er:0.75,tth:0.90,roles:[["Marketing Manager",1],["Communications Officer",2],["Digital Marketing Executive",2],["Bid Writer",2]]}
+  ];
+  var RMAP={},DMAP={};REGIONS.forEach(function(r){RMAP[r.id]=r;});DEPTS.forEach(function(d){DMAP[d.id]=d;});
+
+  /* invented names: none of these are real colleagues */
+  var FIRST=["Moira","Tomasz","Dervla","Callum","Priya","Gethin","Aoife","Marek","Shona","Kwame","Elin","Ruairi","Farah","Angus","Bronagh","Dawid","Nia","Fergus","Sunita","Iestyn","Orla","Lachlan","Zainab","Hywel","Catriona","Piotr","Niamh","Hamish","Amara","Rhodri","Sinead","Greig","Leila","Owain","Mhairi","Kofi","Eira","Declan","Yasmin","Struan","Carys","Emeka","Fionnuala","Ivo"];
+  var LAST=["Kessock","Brylka","Quillan","Tarbert","Vasani","Penhallow","Corrigle","Stanek","Abernyte","Oduya","Trevethan","Mullarney","Zaheer","Balcomie","Fennick","Wojtas","Pencarrow","Dunlossit","Radia","Aberdaron","Kilbride","Strathnaver","Okonjo","Llanrhos","Garvock","Halloran","Ostrowe","Tregear","Ballantrae","Musoke","Inverarity","Carnduff","Hesketh","Polglaze","Drumlin","Achebe","Skerray","Maddocks","Lisburne","Kowalczyk","Fintry","Rosemullion","Tullis","Egerton","Bavidge","Nethercote"];
+
+  /* headcount cells: region x department x role */
+  var CELLS=[];
+  REGIONS.forEach(function(r){var rb=Math.round(r.scale*BASE_HC);
+    DEPTS.forEach(function(d){var s=d.roles.reduce(function(a,x){return a+x[1];},0);
+      d.roles.forEach(function(role){CELLS.push({r:r.id,d:d.id,role:role[0],hc:Math.max(1,Math.round(rb*d.w*role[1]/s)),people:[]});});});});
+  var TOTAL=CELLS.reduce(function(a,c){return a+c.hc;},0);
+  function siteW(r){return r.sites.map(function(s){return hf(s,0.6,1.4);});}
+
+  /* colleagues */
+  var PEOPLE=[];
+  CELLS.forEach(function(c,ci){var r=RMAP[c.r],sw=siteW(r);
+    for(var i=0;i<c.hc;i++){var u=rnd(),ten=u<0.14?rnd():Math.min(38,1-Math.log(1-rnd())*5.9);
+      var p={ci:ci,name:FIRST[Math.floor(rnd()*FIRST.length)]+" "+LAST[Math.floor(rnd()*LAST.length)],site:pick(r.sites,sw),role:c.role,tenure:ten};
+      c.people.push(p);PEOPLE.push(p);}});
+
+  var QTR=["Oct-Dec","Jan-Mar","Apr-Jun","Jul-Sep"];
+  var MONS=["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"];
+  function startQ(p){var m=Math.min(11,Math.floor(p.tenure*12));return 3-Math.floor(m/3);}
+  function startMon(p){var m=Math.min(11,Math.floor(p.tenure*12));return MONS[11-m];}
+
+  /* weights */
+  var wAbs=CELLS.map(function(c){return c.hc*RMAP[c.r].absF*DMAP[c.d].abs;});
+  var wEr=CELLS.map(function(c){return c.hc*DMAP[c.d].er;});
+  var wAtt=CELLS.map(function(c){return c.hc*RMAP[c.r].attF*DMAP[c.d].att;});
+  var LEVEL=CELLS.map(function(c){return Math.max(60,Math.min(100,90+RMAP[c.r].compD+DMAP[c.d].comp+hf(c.role,-1,1)));});
+  var wTr=CELLS.map(function(c,i){return c.hc*(100-LEVEL[i]);});
+  var TTH=CELLS.map(function(c){return 46*RMAP[c.r].tthF*DMAP[c.d].tth;});
+
+  /* absence */
+  var ABS_SPLIT=[["Oct-Dec",6300,4000],["Jan-Mar",5900,3800],["Apr-Jun",5650,3700],["Jul-Sep",5400,3600]];
+  var ABS_TREND=[4.6,4.5,4.4,4.2,4.1,4.0,3.9,3.8,3.7,3.6,3.5,3.4];
+  var ABS_REASON=[["Minor illness",24],["Musculoskeletal",20],["Mental health",16],["Long-term other",16],["Stress / anxiety",13],["Surgery / hospital",11]];
+  var cShort=ABS_SPLIT.map(function(q){return alloc(q[1],wAbs);}),cLong=ABS_SPLIT.map(function(q){return alloc(q[2],wAbs);});
+  var cTrig=sample(83,wAbs);
+  var LTS=[];
+  sample(61,wAbs).forEach(function(n,ci){var r=RMAP[CELLS[ci].r],sw=siteW(r);
+    for(var i=0;i<n;i++){var wk=Math.min(46,4+Math.floor(-Math.log(1-rnd())*11));
+      LTS.push({ci:ci,site:pick(r.sites,sw),role:CELLS[ci].role,weeks:wk,
+        stage:wk<8?"Welfare meeting":(wk<16?"OH referral":(wk<26?"Formal review":"Capability")),
+        code:wk>=26?"risk":(wk>=13?"warn":"good"),label:wk>=26?"At risk":(wk>=13?"Watch":"On track")});}});
+  LTS.sort(function(a,b){return b.weeks-a.weeks;});LTS.forEach(function(x,i){x.ref="LTS-"+(101+i);});
+
+  /* employee relations */
+  var ER_TYPE=[["Disciplinary",38],["Long-term sickness",29],["Grievance",26],["Capability",21],["Flexible working",14],["Other",10]];
+  var ER_BANDS=[["0-14 days",0.355,1,14],["15-30 days",0.285,15,30],["31-60 days",0.19,31,60],["61-90 days",0.10,61,90],["90+ days",0.07,91,128]];
+  var ER_FLOW=[["Apr",28,24],["May",26,27],["Jun",24,26],["Jul",25,28],["Aug",22,27],["Sep",23,28]];
+  var ER=[];
+  (function(){var per=sample(138,wEr),bandN=alloc(138,ER_BANDS.map(function(b){return b[1];})),bag=[];
+    bandN.forEach(function(n,b){for(var i=0;i<n;i++)bag.push(b);});
+    for(var i=bag.length-1;i>0;i--){var j=Math.floor(rnd()*(i+1)),t=bag[i];bag[i]=bag[j];bag[j]=t;}
+    var k=0;per.forEach(function(n,ci){var r=RMAP[CELLS[ci].r],sw=siteW(r);
+      for(var i=0;i<n;i++){var b=ER_BANDS[bag[k++]];
+        ER.push({ci:ci,site:pick(r.sites,sw),role:CELLS[ci].role,band:b[0],age:b[2]+Math.floor(rnd()*(b[3]-b[2]+1)),
+          type:pick(ER_TYPE.map(function(x){return x[0];}),ER_TYPE.map(function(x){return x[1];}))});}});
+    ER.sort(function(a,b){return b.age-a.age;});ER.forEach(function(x,i){x.ref="ER-"+(2301+i);});})();
+  var cOpened=ER_FLOW.map(function(m,k){return alloc(m[1],wEr.map(function(w,i){return w*hf("o"+k+"_"+i,0.6,1.4);}));});
+  var cClosed=ER_FLOW.map(function(m,k){return alloc(m[2],wEr.map(function(w,i){return w*hf("c"+k+"_"+i,0.6,1.4);}));});
+  var cResolved=sample(16,wEr);
+
+  /* leavers */
+  var HC_TREND=[17.8,17.5,17.1,16.8,16.5,16.2,15.9,15.7,15.5,15.3,15.2,15.1];
+  var HC_REASON=[["Career progression",24],["Better pay",23],["Relocation",15],["Work-life balance",12],["End of contract",11],["Retirement",8],["Other",7]];
+  var VOLUNTARY={"Career progression":1,"Better pay":1,"Relocation":1,"Work-life balance":1,"Other":1};
+  var LEAVERS=[];
+  alloc(Math.round(TOTAL*0.151),wAtt).forEach(function(n,ci){var r=RMAP[CELLS[ci].r],sw=siteW(r);
+    for(var i=0;i<n;i++){var fy=rnd()<0.27,reason=pick(HC_REASON.map(function(x){return x[0];}),HC_REASON.map(function(x){return x[1];}));
+      if(fy&&reason==="Retirement")reason="Better pay";
+      LEAVERS.push({ci:ci,site:pick(r.sites,sw),role:CELLS[ci].role,reason:reason,q:pick([0,1,2,3],[23,25,27,25]),fy:fy});}});
+
+  /* training */
+  var TR_TREND=[83,84,85,86,87,87,88,88,89,89,90,90];
+  var COURSES=[
+    {name:"Site Safety Induction",off:8,w:24,corp:false},
+    {name:"Fire Safety",off:6,w:32,corp:true},
+    {name:"Manual Handling",off:4,w:56,corp:true},
+    {name:"GDPR / Data",off:2,w:78,corp:true},
+    {name:"First Aid",off:-1,w:104,corp:true},
+    {name:"Working at Height",off:-4,w:168,corp:false},
+    {name:"HV / LV Awareness",off:-7,w:150,corp:false}];
+  var OVERDUE=[];
+  alloc(612,wTr).forEach(function(n,ci){var c=CELLS[ci],corp=DMAP[c.d].group==="Corporate";
+    var cs=COURSES.filter(function(x){return !corp||x.corp;});
+    for(var i=0;i<n;i++){var p=c.people[Math.floor(rnd()*c.people.length)];
+      OVERDUE.push({ci:ci,site:p.site,role:c.role,name:p.name,course:pick(cs,cs.map(function(x){return x.w;})).name,days:Math.min(210,1+Math.floor(-Math.log(1-rnd())*42))});}});
+  var cExpiring=alloc(840,CELLS.map(function(c,i){return c.hc*hf("e"+i,0.6,1.4);}));
+
+  /* ---------- selection helpers ---------- */
+  function inSel(c,s){return (s.region==="all"||c.r===s.region)&&(s.dept==="all"||c.d===s.dept)&&(s.role==="all"||c.role===s.role);}
+  function mask(s){return CELLS.map(function(c){return inSel(c,s);});}
+  function sumC(arr,mk){var t=0;for(var i=0;i<arr.length;i++)if(mk[i])t+=arr[i];return t;}
+  function recs(list,mk){return list.filter(function(x){return mk[x.ci];});}
+  function locOf(x,s){return s.region==="all"?RMAP[CELLS[x.ci].r].name:x.site;}
+  function locs(s){return s.region==="all"?REGIONS.map(function(r){return r.name;}):RMAP[s.region].sites.slice();}
+  function sub(s,k,v){var o={region:s.region,dept:s.dept,role:s.role};o[k]=v;return o;}
+  var HCARR=CELLS.map(function(c){return c.hc;});
+
+  function metrics(s){
+    var mk=mask(s),head=sumC(HCARR,mk),o={head:head,mask:mk};
+    o.split=ABS_SPLIT.map(function(q,k){return [q[0],sumC(cShort[k],mk),sumC(cLong[k],mk)];});
+    o.days=o.split.reduce(function(a,q){return a+q[1]+q[2];},0);
+    o.absRate=head?o.days/(head*WORKDAYS)*100:0;o.daysPer=head?o.days/head:0;o.cost=o.days*COST_PER_DAY;
+    o.lts=recs(LTS,mk);o.lt26=o.lts.filter(function(x){return x.weeks>=26;}).length;o.trig=sumC(cTrig,mk);
+    o.er=recs(ER,mk);o.erOpen=o.er.length;
+    o.erAged=o.er.filter(function(x){return x.age>60;}).length;o.erTrib=o.er.filter(function(x){return x.age>90;}).length;
+    o.erAvg=o.erOpen?o.er.reduce(function(a,x){return a+x.age;},0)/o.erOpen:0;
+    o.resolved=sumC(cResolved,mk);
+    o.flow=ER_FLOW.map(function(m,k){return [m[0],sumC(cOpened[k],mk),sumC(cClosed[k],mk)];});
+    o.leavers=recs(LEAVERS,mk);o.attr=head?o.leavers.length/head*100:0;
+    o.vol=head?o.leavers.filter(function(x){return VOLUNTARY[x.reason];}).length/head*100:0;
+    o.people=PEOPLE.filter(function(p){return mk[p.ci];});
+    o.starters=o.people.filter(function(p){return p.tenure<1;});
+    var fyL=o.leavers.filter(function(x){return x.fy;}).length;
+    o.fy=(o.starters.length+fyL)?fyL/(o.starters.length+fyL)*100:0;
+    o.tenure=head?o.people.reduce(function(a,p){return a+p.tenure;},0)/head:0;
+    var tw=0,lw=0;CELLS.forEach(function(c,i){if(mk[i]){tw+=c.hc*TTH[i];lw+=c.hc*LEVEL[i];}});
+    o.tth=head?tw/head:0;o.comp=head?lw/head:0;
+    o.fully=Math.max(40,Math.min(100,74+(o.comp-90)*1.5));
+    o.overdue=recs(OVERDUE,mk);o.expiring=sumC(cExpiring,mk);
+    return o;
+  }
+
+  return {hf:hf,REGIONS:REGIONS,DEPTS:DEPTS,RMAP:RMAP,DMAP:DMAP,CELLS:CELLS,TOTAL:TOTAL,PEOPLE:PEOPLE,QTR:QTR,MONS:MONS,
+    ABS_TREND:ABS_TREND,ABS_REASON:ABS_REASON,ER_TYPE:ER_TYPE,ER_BANDS:ER_BANDS,HC_TREND:HC_TREND,HC_REASON:HC_REASON,
+    TR_TREND:TR_TREND,COURSES:COURSES,cShort:cShort,cLong:cLong,cOpened:cOpened,cClosed:cClosed,
+    metrics:metrics,mask:mask,sumC:sumC,locOf:locOf,locs:locs,sub:sub,startQ:startQ,startMon:startMon,alloc:alloc};
+})();
+
+</script>
+<script>
 (function(){
   "use strict";
   var $=function(s){return document.querySelector(s);};
-  var tip=$("#tip");
-  function showTip(h,x,y){tip.innerHTML=h;tip.style.opacity="1";var w=tip.offsetWidth,ht=tip.offsetHeight;var px=x+14;if(px+w>innerWidth-8)px=x-w-14;var py=y-ht-10;if(py<8)py=y+18;tip.style.left=px+"px";tip.style.top=py+"px";}
-  function hideTip(){tip.style.opacity="0";}
+  var tip=$("#tip"),tipOn=false;
+  function showTip(h,x,y){tip.innerHTML=h;tip.style.opacity="1";tipOn=true;var w=tip.offsetWidth,ht=tip.offsetHeight;var px=x+14;if(px+w>innerWidth-8)px=x-w-14;if(px<8)px=8;var py=y-ht-10;if(py<8)py=y+18;if(py+ht>innerHeight-8)py=Math.max(8,innerHeight-ht-8);tip.style.left=px+"px";tip.style.top=py+"px";}
+  function hideTip(){tip.style.opacity="0";tipOn=false;}
+  document.addEventListener("click",function(e){if(tipOn&&!(e.target.closest&&e.target.closest(".bar")))hideTip();});
+  window.addEventListener("scroll",function(){if(tipOn)hideTip();},{passive:true});
   function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
-  function nf(n){return n.toLocaleString("en-GB");}
-
-  var BASE=820;
-  var REGIONS=[
-    {id:"sco",name:"Scotland",scale:1.25},
-    {id:"nor",name:"North of England",scale:0.90},
-    {id:"mid",name:"Midlands & East",scale:1.10},
-    {id:"lon",name:"London & South East",scale:0.85},
-    {id:"wal",name:"Wales & West",scale:0.80},
-    {id:"irl",name:"Ireland",scale:0.95}
-  ];
-  var DEPTS=[
-    {name:"Construction & Site",group:"Delivery",w:0.28,roles:[["Construction Manager",2],["Site Manager",4],["Civils Site Engineer",6],["Overhead Linesperson",10],["Cable Jointer",7],["Substation Fitter",7]]},
-    {name:"Project Management",group:"Delivery",w:0.15,roles:[["Project Director",1],["Senior Project Manager",3],["Project Manager",6],["Project Engineer",7],["Graduate Project Manager",3]]},
-    {name:"Engineering & Design",group:"Delivery",w:0.13,roles:[["Design Manager",1],["Senior Design Engineer",3],["Design Engineer",6],["Protection & Control Engineer",3],["CAD Technician",3]]},
-    {name:"Commercial & Estimating",group:"Delivery",w:0.08,roles:[["Commercial Manager",1],["Senior Quantity Surveyor",2],["Quantity Surveyor",4],["Estimator",3],["Bid Manager",1]]},
-    {name:"Commissioning & Testing",group:"Delivery",w:0.07,roles:[["Commissioning Manager",1],["Commissioning Engineer",4],["Test Technician",4]]},
-    {name:"SHEQ",group:"Delivery",w:0.06,roles:[["SHEQ Manager",1],["Health & Safety Advisor",4],["Environmental Advisor",2],["Quality Engineer",2]]},
-    {name:"Finance",group:"Corporate",w:0.06,roles:[["Finance Director",1],["Financial Controller",1],["Management Accountant",3],["Accounts Assistant",4],["Payroll Officer",2]]},
-    {name:"HR / People",group:"Corporate",w:0.05,roles:[["Head of HR",1],["Regional HR Manager",1],["HR Business Partner",3],["HR Advisor",4],["L&D Advisor",2]]},
-    {name:"Procurement & Supply Chain",group:"Corporate",w:0.045,roles:[["Procurement Manager",1],["Buyer",4],["Supply Chain Coordinator",3]]},
-    {name:"IT & Digital",group:"Corporate",w:0.04,roles:[["IT Manager",1],["IT Support Technician",4],["Data / BI Analyst",2]]},
-    {name:"Marketing & Communications",group:"Corporate",w:0.035,roles:[["Marketing Manager",1],["Communications Officer",2],["Digital Marketing Executive",2],["Bid Writer",2]]}
-  ];
-  var ROLE_TYPES=DEPTS.reduce(function(a,d){return a+d.roles.length;},0);
-
-  function rbase(reg){return Math.round(reg.scale*BASE);}
-  function roleHCforRegion(reg,dept,role){var s=dept.roles.reduce(function(a,r){return a+r[1];},0);return Math.max(1,Math.round(rbase(reg)*dept.w*role[1]/s));}
-  function roleHC(scope,dept,role){
-    if(scope==="all")return REGIONS.reduce(function(a,reg){return a+roleHCforRegion(reg,dept,role);},0);
-    var reg=REGIONS.filter(function(r){return r.id===scope;})[0];return roleHCforRegion(reg,dept,role);
-  }
-  function deptTotal(scope,dept){return dept.roles.reduce(function(a,r){return a+roleHC(scope,dept,r);},0);}
-  function regionTotal(regId){var reg=REGIONS.filter(function(r){return r.id===regId;})[0];return DEPTS.reduce(function(a,d){return a+d.roles.reduce(function(b,r){return b+roleHCforRegion(reg,d,r);},0);},0);}
+  function nf(n){return Number(n).toLocaleString("en-GB");}
+  function r1(v){return Math.round(v*10)/10;}
+  function yrs(t){return t<1?"under 1 yr":Math.floor(t)+" yrs";}
+  function topServing(list){return list.slice().sort(function(a,b){return b.tenure-a.tenure;}).slice(0,3).map(function(p){return p.name+", "+p.role+", "+yrs(p.tenure);});}
+  function tipHTML(title,value,lines){return "<div>"+esc(title)+"</div><div class=\"t2\">"+esc(value)+"</div><div class=\"tl\">Longest serving (example names)</div><ol>"+lines.map(function(l){return "<li>"+esc(l)+"</li>";}).join("")+"</ol>";}
 
   var state={region:"all",dept:null};
-
-  // region dropdown
   var rs=$("#region");
-  rs.innerHTML='<option value="all">All UK &amp; Ireland</option>'+REGIONS.map(function(r){return '<option value="'+r.id+'">'+esc(r.name)+'</option>';}).join("");
+  rs.innerHTML='<option value="all">All UK &amp; Ireland</option>'+M.REGIONS.map(function(r){return '<option value="'+r.id+'">'+esc(r.name)+'</option>';}).join("");
 
   function bars(id,items,o){
-    o=o||{};var W=o.w||360,rowH=o.rowH||30,padT=6,L=o.labelW||150,R=52,pw=W-L-R,H=padT+items.length*rowH+6;
-    var max=Math.max.apply(null,items.map(function(x){return x.value;}));
-    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Bar chart">';
+    o=o||{};var el=$("#"+id),W=Math.max(280,Math.round(el.clientWidth||0)),small=W<480,rowH=30,padT=6,L=small?(o.labelS||110):(o.labelW||150),R=58,pw=W-L-R,H=padT+items.length*rowH+6,tips=[];
+    var max=Math.max.apply(null,items.map(function(x){return x.value;}).concat([1]));
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(o.aria||"Bar chart")+'">';
     items.forEach(function(it,i){
       var y=padT+i*rowH,bw=Math.max(pw*it.value/max,2);
       var fill=it.group==="Corporate"?"var(--cyan)":"var(--brand)";
-      var faded=(o.highlight&&o.highlight!==it.key)?' opacity="0.45"':'';
-      s+='<text class="ax" x="'+(L-8)+'" y="'+(y+rowH/2+4)+'" text-anchor="end">'+esc(it.label)+'</text>';
-      s+='<rect class="bar" x="'+L+'" y="'+(y+5)+'" width="'+bw+'" height="'+(rowH-12)+'" rx="4" fill="'+fill+'"'+faded+' data-key="'+esc(it.key||it.label)+'" data-l="'+esc(it.label)+'" data-v="'+it.value+'"/>';
+      var faded=(o.highlight&&o.highlight!==it.key)?' opacity="0.4"':'';tips.push(it.tip);
+      s+='<text class="ax" x="'+(L-8)+'" y="'+(y+rowH/2+4)+'" text-anchor="end">'+esc(small&&it.short?it.short:it.label)+'</text>';
+      s+='<rect class="bar" x="'+L+'" y="'+(y+5)+'" width="'+bw+'" height="'+(rowH-12)+'" rx="4" fill="'+fill+'"'+faded+' data-t="'+i+'" data-key="'+esc(it.key)+'"/>';
       s+='<text x="'+(L+bw+6)+'" y="'+(y+rowH/2+4)+'" class="vlab">'+nf(it.value)+'</text>';
     });
-    s+='</svg>';
-    var el=$("#"+id);el.innerHTML=s;
+    s+='</svg>';el.innerHTML=s;
     el.querySelectorAll(".bar").forEach(function(m){
-      m.addEventListener("mousemove",function(e){showTip(esc(m.getAttribute("data-l"))+'<br><span class="t2">'+nf(+m.getAttribute("data-v"))+' people</span>',e.clientX,e.clientY);});
+      m.addEventListener("mousemove",function(e){showTip(tips[+m.getAttribute("data-t")],e.clientX,e.clientY);});
       m.addEventListener("mouseleave",hideTip);
-      if(o.onClick)m.addEventListener("click",function(){o.onClick(m.getAttribute("data-key"));});
+      m.addEventListener("click",function(){hideTip();o.onClick(m.getAttribute("data-key"));});
     });
   }
 
   function render(){
-    var scope=state.region;
-    // dept totals
-    var depts=DEPTS.map(function(d){return {name:d.name,group:d.group,total:deptTotal(scope,d)};});
-    var total=depts.reduce(function(a,d){return a+d.total;},0);
-    var del=depts.filter(function(d){return d.group==="Delivery";}).reduce(function(a,d){return a+d.total;},0);
-    var delPct=Math.round(del/total*100), corPct=100-delPct;
-    // kpis
-    var regLabel=scope==="all"?"6 regions":REGIONS.filter(function(r){return r.id===scope;})[0].name;
+    var scope=state.region,sel={region:scope,dept:"all",role:"all"};
+    var all=M.metrics(sel),uk=scope==="all"?all:M.metrics({region:"all",dept:"all",role:"all"});
+    var depts=M.DEPTS.map(function(d){var m=M.metrics({region:scope,dept:d.id,role:"all"});return {d:d,m:m,total:m.head};});
+    var total=all.head;
+    var del=depts.filter(function(x){return x.d.group==="Delivery";}).reduce(function(a,x){return a+x.total;},0);
+    var delPct=Math.round(del/total*100),corPct=100-delPct;
+    var regLabel=scope==="all"?"6 regions":M.RMAP[scope].name;
+    var roleTypes=M.DEPTS.reduce(function(a,d){return a+d.roles.length;},0);
     $("#kpis").innerHTML=[
       {l:"Headcount",v:nf(total),s:regLabel,alt:false},
-      {l:"Departments",v:"11",s:"6 delivery, 5 corporate",alt:true},
-      {l:"Role types",v:String(ROLE_TYPES),s:"distinct job roles",alt:false},
+      {l:"Departments",v:String(M.DEPTS.length),s:"6 delivery, 5 corporate",alt:true},
+      {l:"Role types",v:String(roleTypes),s:"distinct job roles",alt:false},
       {l:"Delivery share",v:delPct+"%",s:"of the workforce",alt:false},
       {l:"Corporate share",v:corPct+"%",s:"support functions",alt:true}
     ].map(function(k){return '<div class="kpi'+(k.alt?' alt':'')+'"><div class="k-l">'+k.l+'</div><div class="k-v">'+k.v+'</div><div class="k-s">'+k.s+'</div></div>';}).join("");
-    // dept bars (sorted desc)
-    var deptItems=depts.slice().sort(function(a,b){return b.total-a.total;}).map(function(d){return {label:d.name,value:d.total,group:d.group,key:d.name};});
-    bars("c_dept",deptItems,{w:380,rowH:30,labelW:170,highlight:state.dept,onClick:function(name){state.dept=(state.dept===name)?null:name;render();}});
-    // region bars (always all regions; highlight selected)
-    var regItems=REGIONS.map(function(r){return {label:r.name,value:regionTotal(r.id),group:"Delivery",key:r.id};}).sort(function(a,b){return b.value-a.value;});
-    bars("c_region",regItems,{w:360,rowH:30,labelW:150,highlight:state.region==="all"?null:state.region,onClick:function(id){state.region=(state.region===id)?"all":id;rs.value=state.region;state.dept=null;render();}});
-    // roles table
+
+    /* text that changes with the region */
+    var big=depts.slice().sort(function(a,b){return b.total-a.total;});
+    var roles=[];M.CELLS.forEach(function(c,i){if(all.mask[i])roles.push(c);});
+    var rsum={};roles.forEach(function(c){rsum[c.role]=(rsum[c.role]||0)+c.hc;});
+    var topRole=Object.keys(rsum).sort(function(a,b){return rsum[b]-rsum[a];})[0];
+    var hr=M.metrics({region:scope,dept:"hr",role:"all"}).head;
+    var t="";
+    if(scope==="all"){var rg=M.REGIONS.map(function(r){return [r.name,M.metrics({region:r.id,dept:"all",role:"all"}).head];}).sort(function(a,b){return b[1]-a[1];});
+      t="<p>UK &amp; Ireland has "+nf(total)+" colleagues across 6 regions. "+esc(rg[0][0])+" is the largest region ("+nf(rg[0][1])+") and "+esc(rg[rg.length-1][0])+" the smallest ("+nf(rg[rg.length-1][1])+").</p>";}
+    else{var r=M.RMAP[scope];t="<p>"+esc(r.name)+" has "+nf(total)+" colleagues across "+r.sites.length+" sites ("+esc(r.sites.join(", "))+"). That is "+Math.round(total/uk.head*100)+"% of the UK &amp; Ireland workforce.</p>";}
+    t+="<p>"+esc(big[0].d.name)+" is the largest department with "+nf(big[0].total)+" colleagues, "+Math.round(big[0].total/total*100)+"% of the total. Delivery teams make up "+delPct+"% of the workforce and corporate functions "+corPct+"%. The most common role is "+esc(topRole)+" ("+nf(rsum[topRole])+").</p>";
+    t+="<p>Average length of service is "+r1(all.tenure).toFixed(1)+" years, and "+nf(all.starters.length)+" colleagues joined in the last 12 months.</p>";
+    $("#insight").innerHTML='<div class="card insight"><h2>Workforce summary: '+esc(scope==="all"?"UK & Ireland":M.RMAP[scope].name)+'</h2>'+t+'</div>';
+
+    var deptItems=big.map(function(x){return {label:x.d.name,short:x.d.short,value:x.total,group:x.d.group,key:x.d.id,tip:tipHTML(x.d.name,nf(x.total)+" people",topServing(x.m.people))};});
+    bars("c_dept",deptItems,{labelW:180,labelS:100,highlight:state.dept,aria:"Headcount by department",onClick:function(id){state.dept=(state.dept===id)?null:id;render();}});
+    var regItems=M.REGIONS.map(function(r){var m=M.metrics({region:r.id,dept:"all",role:"all"});return {label:r.name,value:m.head,group:"Delivery",key:r.id,tip:tipHTML(r.name,nf(m.head)+" people",topServing(m.people))};}).sort(function(a,b){return b.value-a.value;});
+    bars("c_region",regItems,{labelW:130,labelS:124,highlight:scope==="all"?null:scope,aria:"Headcount by region",onClick:function(id){state.region=(state.region===id)?"all":id;rs.value=state.region;state.dept=null;render();}});
+
     var rows=[];
-    DEPTS.forEach(function(d){
-      if(state.dept&&d.name!==state.dept)return;
-      d.roles.forEach(function(r){rows.push({dept:d.name,group:d.group,role:r[0],hc:roleHC(scope,d,r)});});
+    M.DEPTS.forEach(function(d){
+      if(state.dept&&d.id!==state.dept)return;
+      d.roles.forEach(function(r){var m=M.metrics({region:scope,dept:d.id,role:r[0]});rows.push({dept:d.name,group:d.group,role:r[0],hc:m.head,ten:m.tenure});});
     });
     rows.sort(function(a,b){return b.hc-a.hc;});
     var maxhc=Math.max.apply(null,rows.map(function(r){return r.hc;}));
-    $("#rolestitle").textContent=state.dept?("Roles in "+state.dept):"All roles";
-    $("#rolessub").textContent=state.dept?("Headcount for "+regLabel+".") :("Every role type, "+regLabel+". Click a department bar to focus.");
+    var dname=state.dept?M.DMAP[state.dept].name:null;
+    $("#rolestitle").textContent=dname?("Roles in "+dname):"All roles";
+    $("#rolessub").textContent=dname?("Headcount for "+regLabel+"."):("Every role type, "+regLabel+". Click a department bar to focus.");
     $("#rolesbody").innerHTML=rows.map(function(r){
       var w=Math.max(6,Math.round(110*r.hc/maxhc));
-      return '<tr><td>'+esc(r.dept)+'</td><td>'+esc(r.role)+'</td><td><span class="grp '+(r.group==="Corporate"?"g-cor":"g-del")+'">'+r.group+'</span></td><td class="n">'+nf(r.hc)+'</td><td><span class="mbar'+(r.group==="Corporate"?" cor":"")+'" style="width:'+w+'px"></span></td></tr>';
+      return '<tr><td>'+esc(r.dept)+'</td><td>'+esc(r.role)+'</td><td><span class="grp '+(r.group==="Corporate"?"g-cor":"g-del")+'">'+r.group+'</span></td><td class="n">'+nf(r.hc)+'</td><td><span class="mbar'+(r.group==="Corporate"?" cor":"")+'" style="width:'+w+'px"></span></td><td class="n">'+r1(r.ten).toFixed(1)+' yrs</td></tr>';
     }).join("");
-    // clear chip
     var cl=$("#clear");
-    if(state.dept){cl.hidden=false;$("#clearname").textContent=state.dept;}else{cl.hidden=true;}
-    $("#foot").textContent="Illustrative sample data built to demonstrate dashboard design. These are not Omexom's real headcount figures. Roles and departments are drawn from Omexom UK & RoI's published job types and business areas. Region slicer and the department bars are live; click a department to drill into its roles.";
+    if(dname){cl.hidden=false;$("#clearname").textContent=dname;}else{cl.hidden=true;}
+    $("#foot").textContent="Prepared by Paul Akomeah MCIPD for interview discussion, October 2026. Illustrative sample data: every figure and every name is invented and none of it comes from Omexom. This is not an Omexom publication. Roles and departments are drawn from Omexom UK & RoI's published job types and business areas. Headcount matches the People Analytics page. In live use, row-level security would limit each manager to the colleagues who report up to them.";
   }
 
   rs.addEventListener("change",function(){state.region=this.value;state.dept=null;render();});
@@ -239,6 +456,9 @@
   function applyTheme(t){document.documentElement.setAttribute("data-theme",t);tb.textContent=t==="dark"?"Light":"Dark";}
   var saved;try{saved=localStorage.getItem("omx-theme");}catch(e){}if(saved)applyTheme(saved);
   tb.addEventListener("click",function(){var c=document.documentElement.getAttribute("data-theme");var nx=c==="dark"?"light":(c==="light"?"dark":(matchMedia("(prefers-color-scheme:dark)").matches?"light":"dark"));applyTheme(nx);try{localStorage.setItem("omx-theme",nx);}catch(e){}});
+  var rz,lastW=innerWidth;window.addEventListener("resize",function(){if(innerWidth===lastW)return;lastW=innerWidth;clearTimeout(rz);rz=setTimeout(render,150);});
   render();
 })();
 </script>
+</body>
+</html>
