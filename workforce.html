@@ -381,7 +381,7 @@ var M=(function(){
     var od=m.overdue.filter(function(x){return x.course===c.name;}).length;return {name:c.name,req:req,od:od,comp:req?(1-od/req)*100:null};});}
   function headOf(mk){return sumC(HCARR,mk);}
 
-  return {hf:hf,locStats:locStats,courseStats:courseStats,headOf:headOf,WORKDAYS:WORKDAYS,ER_FLOW:ER_FLOW,NCOURSE:NCOURSE,REGIONS:REGIONS,DEPTS:DEPTS,RMAP:RMAP,DMAP:DMAP,CELLS:CELLS,TOTAL:TOTAL,PEOPLE:PEOPLE,QTR:QTR,MONS:MONS,
+  return {hf:hf,COST_PER_DAY:COST_PER_DAY,locStats:locStats,courseStats:courseStats,headOf:headOf,WORKDAYS:WORKDAYS,ER_FLOW:ER_FLOW,NCOURSE:NCOURSE,REGIONS:REGIONS,DEPTS:DEPTS,RMAP:RMAP,DMAP:DMAP,CELLS:CELLS,TOTAL:TOTAL,PEOPLE:PEOPLE,QTR:QTR,MONS:MONS,
     ABS_TREND:ABS_TREND,ABS_REASON:ABS_REASON,ER_TYPE:ER_TYPE,ER_BANDS:ER_BANDS,HC_TREND:HC_TREND,HC_REASON:HC_REASON,
     TR_TREND:TR_TREND,COURSES:COURSES,cShort:cShort,cLong:cLong,cOpened:cOpened,cClosed:cClosed,
     metrics:metrics,mask:mask,sumC:sumC,locOf:locOf,locs:locs,sub:sub,startQ:startQ,startMon:startMon,alloc:alloc};

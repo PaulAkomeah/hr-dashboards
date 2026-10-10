@@ -87,6 +87,11 @@
   @media (max-width:900px){.sumcols{grid-template-columns:1fr}}
   .insight li{margin:0 0 5px;font-size:13.5px}
   .insight .how{font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:9px;margin:12px 0 2px}
+  .costcard{border-left:4px solid var(--amber)}
+  .costrow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 28px;margin:6px 0 4px}
+  .costrow .c-v{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .costrow .c-l{font-size:12px;color:var(--muted);margin-top:2px}
+  @media (max-width:700px){.costrow{grid-template-columns:1fr}}
   .prose p,.prose li{font-size:13.5px;max-width:86ch}
   .prose p{margin:0 0 8px}
   .prose ul,.prose ol{margin:0 0 6px;padding-left:18px}
@@ -351,7 +356,7 @@ var M=(function(){
     var od=m.overdue.filter(function(x){return x.course===c.name;}).length;return {name:c.name,req:req,od:od,comp:req?(1-od/req)*100:null};});}
   function headOf(mk){return sumC(HCARR,mk);}
 
-  return {hf:hf,locStats:locStats,courseStats:courseStats,headOf:headOf,WORKDAYS:WORKDAYS,ER_FLOW:ER_FLOW,NCOURSE:NCOURSE,REGIONS:REGIONS,DEPTS:DEPTS,RMAP:RMAP,DMAP:DMAP,CELLS:CELLS,TOTAL:TOTAL,PEOPLE:PEOPLE,QTR:QTR,MONS:MONS,
+  return {hf:hf,COST_PER_DAY:COST_PER_DAY,locStats:locStats,courseStats:courseStats,headOf:headOf,WORKDAYS:WORKDAYS,ER_FLOW:ER_FLOW,NCOURSE:NCOURSE,REGIONS:REGIONS,DEPTS:DEPTS,RMAP:RMAP,DMAP:DMAP,CELLS:CELLS,TOTAL:TOTAL,PEOPLE:PEOPLE,QTR:QTR,MONS:MONS,
     ABS_TREND:ABS_TREND,ABS_REASON:ABS_REASON,ER_TYPE:ER_TYPE,ER_BANDS:ER_BANDS,HC_TREND:HC_TREND,HC_REASON:HC_REASON,
     TR_TREND:TR_TREND,COURSES:COURSES,cShort:cShort,cLong:cLong,cOpened:cOpened,cClosed:cClosed,
     metrics:metrics,mask:mask,sumC:sumC,locOf:locOf,locs:locs,sub:sub,startQ:startQ,startMon:startMon,alloc:alloc};
@@ -372,6 +377,10 @@ var M=(function(){
   function r1(v){return Math.round(v*10)/10;}
   function pl(n,one,many){return nf(n)+" "+(n===1?one:many);}
   function money(v){return v>=1e6?("£"+(Math.round(v/1e5)/10).toFixed(1)+"m"):("£"+nf(Math.round(v/1000))+"k");}
+  function pounds(v){return "£"+nf(Math.round(v));}
+  /* cost of absence above the 3.0% target, and the value of each 0.1 point */
+  function absSaving(m){return Math.max(0,m.days-m.head*M.WORKDAYS*0.03)*M.COST_PER_DAY;}
+  function absPoint(m){return m.head*M.WORKDAYS*0.001*M.COST_PER_DAY;}
   function cw(el,min){return Math.max(min||280,Math.round(el.clientWidth||0));}
   var MON=M.MONS;
 
@@ -543,8 +552,8 @@ var M=(function(){
     var f=[],a=r1(m.absRate),at=r1(m.attr),fy=Math.round(m.fy),tth=Math.round(m.tth),cp=Math.round(m.comp);
     var sA=rag("abs",m);
     f.push({k:"abs",st:sA,sev:(a-T.abs)/T.abs,
-      text:"Absence is "+a+"% against a 3.0% target."+cmp(m.absRate,uk.absRate,"%",true)+(m.lts.length?" "+pl(m.lts.length,"long-term case is","long-term cases are")+" open"+(m.lt26?", "+m.lt26+" of them for 26 weeks or more.":"."):""),
-      good:"Absence is "+a+"%, inside the 3.0% target.",
+      text:"Absence is "+a+"% against a 3.0% target, at a cost of about "+money(m.cost)+" over 12 months. Meeting the target would save about "+money(absSaving(m))+" a year."+cmp(m.absRate,uk.absRate,"%",true)+(m.lts.length?" "+pl(m.lts.length,"long-term case is","long-term cases are")+" open"+(m.lt26?", "+m.lt26+" of them for 26 weeks or more.":"."):""),
+      good:"Absence is "+a+"%, inside the 3.0% target, at a cost of about "+money(m.cost)+" over 12 months.",
       act:m.lt26?"Review each long-term absence case open for 26 weeks or more with the line manager and occupational health, and agree a dated next step.":"Hold a monthly review of long-term absence cases with line managers so that none passes 26 weeks without a decision."});
     var lg=leaverGroup(m),tr=topKey(m.leavers,function(x){return x.reason;});
     f.push({k:"attr",st:rag("attr",m),sev:(at-T.attr)/T.attr,
@@ -623,12 +632,17 @@ var M=(function(){
       {l:"Open ER cases",v:nf(m.erOpen),st:rag("er",m),s:m.erAged+" over 60 days"},
       {l:"Training compliance",v:Math.round(m.comp)+"%",st:rag("comp",m),s:"target 95%"}];
     var rows=M.REGIONS.map(function(r){var x=M.metrics({region:r.id,dept:state.dept,role:state.role}),cls="pickrow"+(state.region===r.id?" sel":"");
-      if(x.head<10)return '<tr class="'+cls+'" data-r="'+r.id+'"><td>'+esc(r.name)+'</td><td class="n">'+x.head+'</td><td colspan="6">Hidden: fewer than 10 colleagues</td></tr>';
-      return '<tr class="'+cls+'" data-r="'+r.id+'"><td>'+esc(r.name)+'</td><td class="n">'+nf(x.head)+'</td><td class="n">'+pill(rag("abs",x),r1(x.absRate)+"%")+'</td><td class="n">'+pill(rag("attr",x),r1(x.attr)+"%")+'</td><td class="n">'+pill(rag("fy",x),Math.round(x.fy)+"%")+'</td><td class="n">'+x.erOpen+'</td><td class="n">'+pill(rag("er",x),String(x.erAged))+'</td><td class="n">'+pill(rag("comp",x),Math.round(x.comp)+"%")+'</td></tr>';}).join("");
-    rows+='<tr class="tot pickrow" data-r="all"><td>UK &amp; Ireland</td><td class="n">'+nf(uk.head)+'</td><td class="n">'+pill(rag("abs",uk),r1(uk.absRate)+"%")+'</td><td class="n">'+pill(rag("attr",uk),r1(uk.attr)+"%")+'</td><td class="n">'+pill(rag("fy",uk),Math.round(uk.fy)+"%")+'</td><td class="n">'+uk.erOpen+'</td><td class="n">'+pill(rag("er",uk),String(uk.erAged))+'</td><td class="n">'+pill(rag("comp",uk),Math.round(uk.comp)+"%")+'</td></tr>';
-    $("#page").innerHTML=insight("Summary: "+scopeName(),summaryText(m,uk))+kpiHTML(tiles,true)
+      if(x.head<10)return '<tr class="'+cls+'" data-r="'+r.id+'"><td>'+esc(r.name)+'</td><td class="n">'+x.head+'</td><td colspan="7">Hidden: fewer than 10 colleagues</td></tr>';
+      return '<tr class="'+cls+'" data-r="'+r.id+'"><td>'+esc(r.name)+'</td><td class="n">'+nf(x.head)+'</td><td class="n">'+pill(rag("abs",x),r1(x.absRate)+"%")+'</td><td class="n">'+pounds(x.cost)+'</td><td class="n">'+pill(rag("attr",x),r1(x.attr)+"%")+'</td><td class="n">'+pill(rag("fy",x),Math.round(x.fy)+"%")+'</td><td class="n">'+x.erOpen+'</td><td class="n">'+pill(rag("er",x),String(x.erAged))+'</td><td class="n">'+pill(rag("comp",x),Math.round(x.comp)+"%")+'</td></tr>';}).join("");
+    rows+='<tr class="tot pickrow" data-r="all"><td>UK &amp; Ireland</td><td class="n">'+nf(uk.head)+'</td><td class="n">'+pill(rag("abs",uk),r1(uk.absRate)+"%")+'</td><td class="n">'+pounds(uk.cost)+'</td><td class="n">'+pill(rag("attr",uk),r1(uk.attr)+"%")+'</td><td class="n">'+pill(rag("fy",uk),Math.round(uk.fy)+"%")+'</td><td class="n">'+uk.erOpen+'</td><td class="n">'+pill(rag("er",uk),String(uk.erAged))+'</td><td class="n">'+pill(rag("comp",uk),Math.round(uk.comp)+"%")+'</td></tr>';
+    var sv=absSaving(m);
+    var costCard='<div class="card costcard"><h2>Cost of absence: '+esc(scopeName())+'</h2><p class="h-sub">'+nf(m.days)+' working days lost in 12 months, costed at an assumed £'+M.COST_PER_DAY+' a day. The live version would use actual pay and cover costs from payroll.</p>'
+      +'<div class="costrow"><div><div class="c-v">'+money(m.cost)+'</div><div class="c-l">cost of absence, 12 months</div></div>'
+      +'<div><div class="c-v">'+(sv>0?money(sv):"£0")+'</div><div class="c-l">'+(sv>0?"saved each year if absence met the 3.0% target":"absence is already inside the 3.0% target")+'</div></div>'
+      +'<div><div class="c-v">'+money(absPoint(m))+'</div><div class="c-l">value of every 0.1 point off the absence rate</div></div></div></div>';
+    $("#page").innerHTML=costCard+insight("Summary: "+scopeName(),summaryText(m,uk))+kpiHTML(tiles,true)
       +tableCard("Regional comparison","Green is on target, amber is close to target, red needs action. Click a row to select that region.",
-        '<th>Region</th><th class="n">Headcount</th><th class="n">Absence</th><th class="n">Attrition</th><th class="n">First-year attrition</th><th class="n">Open ER cases</th><th class="n">Over 60 days</th><th class="n">Training</th>',rows);
+        '<th>Region</th><th class="n">Headcount</th><th class="n">Absence</th><th class="n">Absence cost</th><th class="n">Attrition</th><th class="n">First-year attrition</th><th class="n">Open ER cases</th><th class="n">Over 60 days</th><th class="n">Training</th>',rows);
     $("#page").querySelectorAll("tr[data-r]").forEach(function(tr){tr.addEventListener("click",function(){state.region=tr.getAttribute("data-r");syncSlicers();draw();});});
   }
   function renderAbsence(m,uk){
